@@ -135,6 +135,7 @@ func testIndex(t *testing.T, when spec.G, it spec.S) {
 						OS:           "linux",
 					}),
 				)
+				h.AssertNil(t, err)
 				h.AssertNil(t, img.Save())
 
 				err = idx.Add(manifestName)
