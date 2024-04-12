@@ -58,6 +58,9 @@ func UsingFormat(format types.MediaType) PushOption {
 // UsingFormat Create the image index with the following format
 func WithFormat(format types.MediaType) Option {
 	return func(o *imgutil.IndexOptions) error {
+		if !format.IsIndex() {
+			return imgutil.ErrUnknownMediaType(format)
+		}
 		o.Format = format
 		return nil
 	}

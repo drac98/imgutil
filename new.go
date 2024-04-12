@@ -315,3 +315,10 @@ func NewTaggableIndex(mfest *v1.IndexManifest) *TaggableIndex {
 		IndexManifest: mfest,
 	}
 }
+
+func NewV1Image(img v1.Image, config v1.Descriptor) V1Image {
+	return V1Image{
+		Image:  img,
+		config: config,
+	}
+}

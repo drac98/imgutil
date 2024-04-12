@@ -9,6 +9,7 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/google/go-containerregistry/pkg/v1/validate"
 )
@@ -608,4 +609,16 @@ func getManifest(image v1.Image) (*v1.Manifest, error) {
 		return nil, errors.New("missing manifest")
 	}
 	return manifest, nil
+}
+
+// Manifest returns this image's Manifest object.
+func (img V1Image) Manifest() (*v1.Manifest, error) {
+	mfest, err := img.Image.Manifest()
+	mfest.Config = img.config
+	return mfest, err
+}
+
+// RawManifest returns the serialized bytes of Manifest()
+func (img V1Image) RawManifest() ([]byte, error) {
+	return partial.RawManifest(img)
 }

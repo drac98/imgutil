@@ -49,35 +49,37 @@ func MutateManifest(i v1.Image, withFunc func(c *v1.Manifest) (mutateSubject, mu
 
 	mfest = mfest.DeepCopy()
 	config := mfest.Config
-	config.Digest = digest
-	config.MediaType = mfest.MediaType
-	if config.Size, err = partial.Size(i); err != nil {
-		return nil, err
-	}
-	config.Annotations = mfest.Annotations
-
 	p := config.Platform
 	if p == nil {
 		p = &v1.Platform{}
 	}
 
-	config.Platform = p
-	mfest.Config = config
+	mfest.Config.Platform = p
+	mutateSub, mutateAnnos := withFunc(mfest)
+	if mfest.Config.Size, err = size(mfest.Config); err != nil {
+		return nil, err
+	}
+
 	if len(mfest.Annotations) == 0 {
 		mfest.Annotations = make(map[string]string)
 	}
 
-	if len(mfest.Config.Annotations) == 0 {
-		mfest.Config.Annotations = make(map[string]string)
+	mfest.Config.Annotations = mfest.Annotations
+	config = mfest.Config
+	config.MediaType = mfest.MediaType
+	config.Digest = digest
+	config.Annotations = mfest.Annotations
+	config.Size, err = size(mfest)
+	if err != nil {
+		return nil, err
 	}
 
-	mutateSub, mutateAnnos := withFunc(mfest)
 	if mutateAnnos {
 		i = mutate.Annotations(i, mfest.Annotations).(v1.Image)
 	}
 
 	if mutateSub {
-		i = mutate.Subject(i, mfest.Config).(v1.Image)
+		i = mutate.Subject(NewV1Image(i, mfest.Config), config).(v1.Image)
 	}
 
 	return i, err
@@ -87,6 +89,12 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 	config := mfest.Config
 	if len(annotations) != 0 && !(MapContains(mfest.Annotations, annotations) || MapContains(config.Annotations, annotations)) {
 		mutateAnnotations = true
+		if len(mfest.Annotations) == 0 {
+			mfest.Annotations = make(map[string]string)
+		}
+		if len(config.Annotations) == 0 {
+			config.Annotations = make(map[string]string)
+		}
 		for k, v := range annotations {
 			mfest.Annotations[k] = v
 			config.Annotations[k] = v
@@ -158,6 +166,11 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 
 	mfest.Config = config
 	return mutateSubject, mutateAnnotations
+}
+
+func size(item any) (int64, error) {
+	bytes, err := json.Marshal(item)
+	return int64(len(bytes)), err
 }
 
 // TaggableIndex any ImageIndex with RawManifest method.
@@ -245,7 +258,7 @@ func MapContains(src, target map[string]string) bool {
 
 func SliceContains(src, target []string) bool {
 	for _, value := range target {
-		if ok := slices.Contains[[]string, string](src, value); !ok {
+		if ok := slices.Contains(src, value); !ok {
 			return false
 		}
 	}

@@ -28,14 +28,15 @@ func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
 	var cnbIndex *imgutil.CNBIndex
 	switch idxOps.Format {
 	case types.DockerManifestList:
-		cnbIndex, err = imgutil.NewCNBIndex(imgutil.NewEmptyDockerIndex(), *idxOps)
+		dockerIndex := imgutil.NewEmptyDockerIndex()
+		cnbIndex, err = imgutil.NewCNBIndex(dockerIndex, *idxOps)
 		if err != nil {
 			return idx, err
 		}
 		// TODO I don't think we should write into disk during creation
-		_, err = layout.Write(layoutPath, imgutil.NewEmptyDockerIndex())
+		_, err = layout.Write(layoutPath, dockerIndex)
 	default:
-		cnbIndex, err = imgutil.NewCNBIndex(imgutil.NewEmptyDockerIndex(), *idxOps)
+		cnbIndex, err = imgutil.NewCNBIndex(empty.Index, *idxOps)
 		if err != nil {
 			return idx, err
 		}

@@ -107,6 +107,12 @@ type Platform struct {
 	OSVersion    string
 }
 
+// hack to add v1.Manifest.Config when mutating image
+type V1Image struct {
+	v1.Image
+	config v1.Descriptor
+}
+
 type SaveDiagnostic struct {
 	ImageName string
 	Cause     error
