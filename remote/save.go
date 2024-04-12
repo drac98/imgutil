@@ -36,7 +36,7 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 		}
 	}
 
-	i.Image, err = imgutil.MutateManifest(i.Image, func(mfest *v1.Manifest) (mutateSubject, mutateAnnotations bool) {
+	i.Image, err = imgutil.MutateManifest(i.Image, func(mfest *v1.Manifest) {
 		i.mutex.TryLock()
 		defer i.mutex.Unlock()
 
@@ -49,7 +49,7 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 		urls, _ := i.URLs()
 		annotations, _ := i.Annotations()
 
-		return imgutil.MutateManifestFn(
+		imgutil.MutateManifestFn(
 			mfest,
 			os,
 			arch,

@@ -157,9 +157,6 @@ func (i *Image) addLayerToStore(fromPath, withDiffID string) (v1.Layer, error) {
 		return nil, err
 	}
 	layer = newPopulatedLayer(diffID, fromPath, 1)
-	if err != nil {
-		return nil, err
-	}
 	fi, err := os.Stat(fromPath)
 	if err != nil {
 		return nil, err

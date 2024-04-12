@@ -35,7 +35,7 @@ func GetManifest(image v1.Image) (*v1.Manifest, error) {
 	return manifest, nil
 }
 
-func MutateManifest(i v1.Image, withFunc func(c *v1.Manifest) (mutateSubject, mutateAnnoations bool)) (v1.Image, error) {
+func MutateManifest(i v1.Image, withFunc func(c *v1.Manifest)) (v1.Image, error) {
 	// FIXME: put MutateManifest on the interface when `remote` and `layout` packages also support it.
 	digest, err := i.Digest()
 	if err != nil {
@@ -55,7 +55,7 @@ func MutateManifest(i v1.Image, withFunc func(c *v1.Manifest) (mutateSubject, mu
 	}
 
 	mfest.Config.Platform = p
-	mutateSub, mutateAnnos := withFunc(mfest)
+	withFunc(mfest)
 	if mfest.Config.Size, err = size(mfest.Config); err != nil {
 		return nil, err
 	}
@@ -74,21 +74,15 @@ func MutateManifest(i v1.Image, withFunc func(c *v1.Manifest) (mutateSubject, mu
 		return nil, err
 	}
 
-	if mutateAnnos {
-		i = mutate.Annotations(i, mfest.Annotations).(v1.Image)
-	}
-
-	if mutateSub {
-		i = mutate.Subject(NewV1Image(i, mfest.Config), config).(v1.Image)
-	}
-
+	i = mutate.Subject(NewV1Image(
+		mutate.Annotations(i, mfest.Annotations).(v1.Image),
+		mfest.Config), config).(v1.Image)
 	return i, err
 }
 
-func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, features, osFeatures, urls []string, annotations map[string]string) (mutateSubject, mutateAnnotations bool) {
+func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, features, osFeatures, urls []string, annotations map[string]string) {
 	config := mfest.Config
 	if len(annotations) != 0 && !(MapContains(mfest.Annotations, annotations) || MapContains(config.Annotations, annotations)) {
-		mutateAnnotations = true
 		if len(mfest.Annotations) == 0 {
 			mfest.Annotations = make(map[string]string)
 		}
@@ -102,7 +96,6 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 	}
 
 	if len(urls) != 0 && !SliceContains(config.URLs, urls) {
-		mutateSubject = true
 		stringSet := NewStringSet()
 		for _, value := range config.URLs {
 			stringSet.Add(value)
@@ -119,7 +112,6 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 	}
 
 	if len(features) != 0 && !SliceContains(config.Platform.Features, features) {
-		mutateSubject = true
 		stringSet := NewStringSet()
 		for _, value := range config.Platform.Features {
 			stringSet.Add(value)
@@ -132,7 +124,6 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 	}
 
 	if len(osFeatures) != 0 && !SliceContains(config.Platform.OSFeatures, osFeatures) {
-		mutateSubject = true
 		stringSet := NewStringSet()
 		for _, value := range config.Platform.OSFeatures {
 			stringSet.Add(value)
@@ -145,27 +136,22 @@ func MutateManifestFn(mfest *v1.Manifest, os, arch, variant, osVersion string, f
 	}
 
 	if os != "" && config.Platform.OS != os {
-		mutateSubject = true
 		config.Platform.OS = os
 	}
 
 	if arch != "" && config.Platform.Architecture != arch {
-		mutateSubject = true
 		config.Platform.Architecture = arch
 	}
 
 	if variant != "" && config.Platform.Variant != variant {
-		mutateSubject = true
 		config.Platform.Variant = variant
 	}
 
 	if osVersion != "" && config.Platform.OSVersion != osVersion {
-		mutateSubject = true
 		config.Platform.OSVersion = osVersion
 	}
 
 	mfest.Config = config
-	return mutateSubject, mutateAnnotations
 }
 
 func size(item any) (int64, error) {

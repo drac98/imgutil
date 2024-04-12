@@ -557,7 +557,21 @@ func (i *CNBImageCore) MutateConfigFile(withFunc func(c *v1.ConfigFile)) error {
 		return err
 	}
 	withFunc(configFile)
-	i.Image, err = mutate.ConfigFile(i.Image, configFile)
+	if i.Image, err = mutate.ConfigFile(i.Image, configFile); err != nil {
+		return err
+	}
+
+	i.Image, err = MutateManifest(i.Image, func(mfest *v1.Manifest) {
+		if mfest.Config.Platform == nil {
+			mfest.Config.Platform = &v1.Platform{}
+		}
+
+		mfest.Config.Platform.OS = configFile.OS
+		mfest.Config.Platform.Architecture = configFile.Architecture
+		mfest.Config.Platform.Variant = configFile.Variant
+		mfest.Config.Platform.OSVersion = configFile.OSVersion
+		mfest.Config.Platform.OSFeatures = configFile.OSFeatures
+	})
 	return err
 }
 

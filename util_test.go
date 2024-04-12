@@ -18,32 +18,19 @@ func TestUtils(t *testing.T) {
 	spec.Run(t, "Utils", testUtils, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
-type FakeIndentifier struct {
-	hash string
-}
-
-func NewFakeIdentifier(hash string) FakeIndentifier {
-	return FakeIndentifier{
-		hash: hash,
-	}
-}
-
-func (f FakeIndentifier) String() string {
-	return f.hash
-}
+var (
+	emptyImage  = empty.Image
+	os          = "some-os"
+	arch        = "some-arch"
+	variant     = "some-variant"
+	osVersion   = "some-os-version"
+	features    = []string{"feature1", "feature2"}
+	osFeatures  = []string{"osFeature1", "osFeature2"}
+	urls        = []string{"url1", "url2"}
+	annotations = map[string]string{"key1": "value1", "key2": "value2"}
+)
 
 func testUtils(t *testing.T, when spec.G, it spec.S) {
-	var (
-		emptyImage  = empty.Image
-		os          = "some-os"
-		arch        = "some-arch"
-		variant     = "some-variant"
-		osVersion   = "some-os-version"
-		features    = []string{"feature1", "feature2"}
-		osFeatures  = []string{"osFeature1", "osFeature2"}
-		urls        = []string{"url1", "url2"}
-		annotations = map[string]string{"key1": "value1", "key2": "value2"}
-	)
 	when("#TaggableIndex", func() {
 		var (
 			taggableIndex *imgutil.TaggableIndex
@@ -378,7 +365,7 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 	})
 	when("#MutateManifest", func() {
 		it("should mutate Manifest", func() {
-			img, err := imgutil.MutateManifest(emptyImage, func(c *v1.Manifest) (_, _ bool) {
+			img, err := imgutil.MutateManifest(emptyImage, func(c *v1.Manifest) {
 				c.Config.Platform.OS = os
 				c.Config.Platform.Architecture = arch
 				c.Config.Platform.Variant = variant
@@ -387,17 +374,12 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 				c.Config.Platform.OSFeatures = osFeatures
 				c.Config.URLs = urls
 				c.Annotations = annotations
-				return true, true
 			})
 			h.AssertNil(t, err)
 
 			mfest, err := img.Manifest()
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, mfest)
-
-			if mfest.Config.Platform == nil {
-				mfest.Config.Platform = &v1.Platform{}
-			}
 
 			h.AssertEq(t, mfest.Config.Platform.OS, os)
 			h.AssertEq(t, mfest.Config.Platform.Architecture, arch)
