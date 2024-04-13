@@ -817,6 +817,41 @@ func (h *CNBIndex) setImageURLs(img v1.Image, hash v1.Hash, urls []string) error
 	return nil
 }
 
+// Returns v1.Descriptor from EditableImage.
+func imageToV1Desc(img EditableImage) (desc v1.Descriptor, err error) {
+	var (
+		os, _         = img.OS()
+		arch, _       = img.Architecture()
+		variant, _    = img.Variant()
+		osVersion, _  = img.OSVersion()
+		features, _   = img.Features()
+		osFeatures, _ = img.OSFeatures()
+		urls, _       = img.URLs()
+		annos, _      = img.Annotations()
+		size, _       = img.ManifestSize()
+		digest, _     = img.Digest()
+	)
+	mediaType, err := img.MediaType()
+
+	desc = v1.Descriptor{
+		MediaType:   mediaType,
+		Size:        size,
+		Digest:      digest,
+		URLs:        urls,
+		Annotations: annos,
+		Platform: &v1.Platform{
+			OS:           os,
+			Architecture: arch,
+			Variant:      variant,
+			OSVersion:    osVersion,
+			Features:     features,
+			OSFeatures:   osFeatures,
+		},
+	}
+
+	return desc, err
+}
+
 // Add the ImageIndex from the registry with the given Reference.
 //
 // If referencing an ImageIndex, will add Platform Specific Image from the Index.
@@ -824,47 +859,21 @@ func (h *CNBIndex) setImageURLs(img v1.Image, hash v1.Hash, urls []string) error
 func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) error {
 	var addOps = &IndexAddOptions{}
 	for _, op := range ops {
-		op(addOps)
+		if err := op(addOps); err != nil {
+			return err
+		}
 	}
 
 	layoutPath := filepath.Join(h.XdgPath, MakeFileSafeName(h.RepoName))
 	path, pathErr := layout.FromPath(layoutPath)
 	if addOps.Local {
 		if pathErr != nil {
-			return pathErr
+			return imgErrs.ErrIndexNeedToBeSaved
 		}
 		img := addOps.Image
-		var (
-			os, _          = img.OS()
-			arch, _        = img.Architecture()
-			variant, _     = img.Variant()
-			osVersion, _   = img.OSVersion()
-			features, _    = img.Features()
-			osFeatures, _  = img.OSFeatures()
-			urls, _        = img.URLs()
-			annos, _       = img.Annotations()
-			size, _        = img.ManifestSize()
-			mediaType, err = img.MediaType()
-			digest, _      = img.Digest()
-		)
+		desc, err := imageToV1Desc(img)
 		if err != nil {
 			return err
-		}
-
-		desc := v1.Descriptor{
-			MediaType:   mediaType,
-			Size:        size,
-			Digest:      digest,
-			URLs:        urls,
-			Annotations: annos,
-			Platform: &v1.Platform{
-				OS:           os,
-				Architecture: arch,
-				Variant:      variant,
-				OSVersion:    osVersion,
-				Features:     features,
-				OSFeatures:   osFeatures,
-			},
 		}
 
 		return path.AppendDescriptor(desc)
@@ -936,8 +945,7 @@ func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) 
 		}
 
 		if pathErr != nil {
-			path, err = layout.Write(layoutPath, h.ImageIndex)
-			if err != nil {
+			if path, err = layout.Write(layoutPath, h.ImageIndex); err != nil {
 				return err
 			}
 		}
@@ -963,7 +971,7 @@ func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) 
 				return err
 			}
 
-			if err != nil {
+			if pathErr != nil {
 				// if the ImageIndex is not saved till now for some reason Save the ImageIndex locally to append images
 				if err = h.Save(); err != nil {
 					return err
@@ -1229,6 +1237,7 @@ func (h *CNBIndex) Save() error {
 	layoutPath := filepath.Join(h.XdgPath, MakeFileSafeName(h.RepoName))
 	path, err := layout.FromPath(layoutPath)
 	if err != nil {
+		// Initially write index to disk then process the changes made to the current index.
 		if path, err = h.save(layoutPath); err != nil {
 			return err
 		}
@@ -1264,15 +1273,17 @@ func (h *CNBIndex) Save() error {
 
 		var imageFound = false
 		for _, imgDesc := range mfest.Manifests {
-			if imgDesc.Digest == hash {
-				imageFound = true
-				if !imgDesc.MediaType.IsImage() && !imgDesc.MediaType.IsIndex() {
-					return imgErrs.NewUnknownMediaTypeError(imgDesc.MediaType)
-				}
-
-				appendAnnotatedManifests(desc, imgDesc, path, &errs)
-				break
+			if imgDesc.Digest != hash {
+				continue
 			}
+
+			imageFound = true
+			if !imgDesc.MediaType.IsImage() && !imgDesc.MediaType.IsIndex() {
+				return imgErrs.NewUnknownMediaTypeError(imgDesc.MediaType)
+			}
+
+			appendAnnotatedManifests(desc, imgDesc, path, &errs)
+			break
 		}
 
 		if !imageFound {
@@ -1309,7 +1320,9 @@ func (h *CNBIndex) Push(ops ...func(*IndexPushOptions) error) error {
 
 	var pushOps = &IndexPushOptions{}
 	for _, op := range ops {
-		op(pushOps)
+		if err := op(pushOps); err != nil {
+			return err
+		}
 	}
 
 	if pushOps.Format != types.MediaType("") {
@@ -1362,7 +1375,7 @@ func (h *CNBIndex) Push(ops ...func(*IndexPushOptions) error) error {
 		multiWriteTagables[ref.Context().Tag(tag)] = taggableIndex
 	}
 
-	// Note: It will only push IndexManifest, assuming all the images it refers exists in registry
+	// Note: It will only push IndexManifest, assuming all the images it refers exists in the registry
 	err = remote.MultiWrite(
 		multiWriteTagables,
 		remote.WithAuthFromKeychain(h.KeyChain),
@@ -1395,9 +1408,7 @@ func (h *CNBIndex) Inspect() (string, error) {
 	return string(mfestBytes), nil
 }
 
-// Remove Image/Index from ImageIndex.
-//
-// Accepts both Tags and Digests.
+// Removes Image/Index from ImageIndex.
 func (h *CNBIndex) Remove(ref name.Reference) (err error) {
 	hash, err := parseReferenceToHash(ref, h.KeyChain, h.Insecure)
 	if err != nil {
@@ -1415,15 +1426,20 @@ func (h *CNBIndex) Remove(ref name.Reference) (err error) {
 	}
 
 	found := false
+	indexManifests := make([]v1.Hash, 0)
 	for _, d := range mfest.Manifests {
 		if d.Digest == hash {
 			found = true
 			break
 		}
+		indexManifests = append(indexManifests, d.Digest)
 	}
 
 	if !found {
-		return imgErrs.NewDigestNotFoundError(ref.Identifier())
+		if len(indexManifests) == 0 {
+			return imgErrs.NewDigestNotFoundError(ref.Identifier())
+		}
+		h.removedManifests = append(h.removedManifests, indexManifests...)
 	}
 
 	h.removedManifests = append(h.removedManifests, hash)
