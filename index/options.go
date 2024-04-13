@@ -5,6 +5,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
+	imgErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -48,7 +50,7 @@ func WithInsecure(insecure bool) PushOption {
 func UsingFormat(format types.MediaType) PushOption {
 	return func(a *imgutil.IndexPushOptions) error {
 		if !format.IsIndex() {
-			return imgutil.ErrUnknownMediaType(format)
+			return imgErrs.NewUnknownMediaTypeError(format)
 		}
 		a.Format = format
 		return nil
@@ -59,7 +61,7 @@ func UsingFormat(format types.MediaType) PushOption {
 func WithFormat(format types.MediaType) Option {
 	return func(o *imgutil.IndexOptions) error {
 		if !format.IsIndex() {
-			return imgutil.ErrUnknownMediaType(format)
+			return imgErrs.NewUnknownMediaTypeError(format)
 		}
 		o.Format = format
 		return nil

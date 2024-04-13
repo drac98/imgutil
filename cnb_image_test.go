@@ -14,7 +14,7 @@ import (
 	h "github.com/buildpacks/imgutil/testhelpers"
 )
 
-func Test_CNB_Image(t *testing.T) {
+func TestCNBImage(t *testing.T) {
 	spec.Run(t, "CNB_Image", testCnbImage, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
