@@ -28,6 +28,7 @@ var (
 	osFeatures  = []string{"osFeature1", "osFeature2"}
 	urls        = []string{"url1", "url2"}
 	annotations = map[string]string{"key1": "value1", "key2": "value2"}
+	fakeHash    = v1.Hash{Algorithm: "sha256", Hex: "8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"}
 )
 
 func testUtils(t *testing.T, when spec.G, it spec.S) {

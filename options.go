@@ -185,6 +185,9 @@ func PullInsecure() func(options *IndexOptions) error {
 // WithFormat Create the image index with the following format
 func WithFormat(format types.MediaType) func(options *IndexOptions) error {
 	return func(o *IndexOptions) error {
+		if !format.IsIndex() {
+			return fmt.Errorf("unsupported media type encountered in image: '%s'", format)
+		}
 		o.Format = format
 		return nil
 	}
@@ -253,6 +256,14 @@ func WithFeatures(features []string) func(options *IndexAddOptions) error {
 func WithOSFeatures(osFeatures []string) func(options *IndexAddOptions) error {
 	return func(a *IndexAddOptions) error {
 		a.OSFeatures = osFeatures
+		return nil
+	}
+}
+
+// Add a single image from index with given Annotations
+func WithAnnotations(annos map[string]string) func(options *IndexAddOptions) error {
+	return func(a *IndexAddOptions) error {
+		a.Annotations = annos
 		return nil
 	}
 }
