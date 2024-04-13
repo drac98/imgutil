@@ -406,6 +406,8 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.Features, features), true)
 			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.OSFeatures, osFeatures), true)
 			h.AssertEq(t, imgutil.SliceContains(mfest.Config.URLs, urls), true)
+			h.AssertEq(t, imgutil.MapContains(mfest.Config.Annotations, annotations), true)
+
 			h.AssertEq(t, imgutil.MapContains(mfest.Annotations, annotations), true)
 		})
 	})

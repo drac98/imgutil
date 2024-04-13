@@ -49,17 +49,7 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 		urls, _ := i.URLs()
 		annotations, _ := i.Annotations()
 
-		imgutil.MutateManifestFn(
-			mfest,
-			os,
-			arch,
-			variant,
-			osv,
-			features,
-			osFeatures,
-			urls,
-			annotations,
-		)
+		imgutil.MutateManifestFn(mfest, os, arch, variant, osv, features, osFeatures, urls, annotations)
 	})
 	if err != nil {
 		return err

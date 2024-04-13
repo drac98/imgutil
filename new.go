@@ -255,7 +255,7 @@ func NormalizedHistory(history []v1.History, nLayers int) []v1.History {
 }
 
 func prepareNewWindowsImageIfNeeded(image *CNBImageCore) error {
-	configFile, err := getConfigFile(image)
+	configFile, err := GetConfigFile(image)
 	if err != nil {
 		return err
 	}

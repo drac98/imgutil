@@ -36,6 +36,10 @@ func testFake(t *testing.T, when spec.G, it spec.S) {
 		var _ imgutil.Image = fakes.NewImage("", "", nil)
 	})
 
+	when("Setters and Getters", func() {
+		it("should set and get expected OS", func() {})
+	})
+
 	when("#SavedNames", func() {
 		when("additional names are provided during save", func() {
 			var (
