@@ -85,6 +85,7 @@ type Image interface {
 	AddLayer(path string) error
 	AddLayerWithDiffID(path, diffID string) error
 	AddLayerWithDiffIDAndHistory(path, diffID string, history v1.History) error
+	AddOrReuseLayerWithHistory(path, diffID string, history v1.History) error
 	Delete() error
 	Rebase(string, Image) error
 	RemoveLabel(string) error
@@ -128,4 +129,12 @@ func (e SaveError) Error() string {
 		errors = append(errors, fmt.Sprintf("[%s: %s]", d.ImageName, d.Cause.Error()))
 	}
 	return fmt.Sprintf("failed to write image to the following tags: %s", strings.Join(errors, ","))
+}
+
+type ErrLayerNotFound struct {
+	DiffID string
+}
+
+func (e ErrLayerNotFound) Error() string {
+	return fmt.Sprintf("failed to find layer with diff ID %q", e.DiffID)
 }

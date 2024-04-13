@@ -16,20 +16,22 @@ import (
 
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/layout"
-
 	h "github.com/buildpacks/imgutil/testhelpers"
 )
 
 // FIXME: relevant tests in this file should be moved into new_test.go and save_test.go to mirror the implementation
 func TestLayout(t *testing.T) {
 	spec.Run(t, "Image", testImage, spec.Parallel(), spec.Report(report.Terminal{}))
+	spec.Run(t, "ImageIndex", testImageIndex, spec.Parallel(), spec.Report(report.Terminal{}))
 }
+
+// global directory and paths
+var testDataDir = filepath.Join("testdata", "layout")
 
 func testImage(t *testing.T, when spec.G, it spec.S) {
 	var (
 		remoteBaseImage     v1.Image
 		tmpDir              string
-		testDataDir         string
 		imagePath           string
 		fullBaseImagePath   string
 		sparseBaseImagePath string
@@ -551,17 +553,18 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 
 	when("#RemoveLabel", func() {
 		when("image exists", func() {
-			var baseImageNamePath = filepath.Join(tmpDir, "my-base-image")
+			var baseImageNamePath string
 
 			it.Before(func() {
+				tmpBaseImageDir, err := os.MkdirTemp(tmpDir, "my-base-image")
+				h.AssertNil(t, err)
+
+				baseImageNamePath = filepath.Join(tmpBaseImageDir, "my-base-image")
+
 				baseImage, err := layout.NewImage(baseImageNamePath, layout.FromBaseImageInstance(remoteBaseImage))
 				h.AssertNil(t, err)
 				h.AssertNil(t, baseImage.SetLabel("custom.label", "new-val"))
 				h.AssertNil(t, baseImage.Save())
-			})
-
-			it.After(func() {
-				os.RemoveAll(baseImageNamePath)
 			})
 
 			it("removes label on img object", func() {
@@ -1125,6 +1128,86 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 				diffID := "sha256:40cf597a9181e86497f4121c604f9f0ab208950a98ca21db883f26b0a548a2eb"
 				_, err = image.GetLayer(diffID)
 				h.AssertNil(t, err)
+			})
+		})
+	})
+}
+
+func testImageIndex(t *testing.T, when spec.G, it spec.S) {
+	var (
+		idx     imgutil.ImageIndex
+		tempDir string
+		err     error
+	)
+
+	it.Before(func() {
+		// creates the directory to save all the OCI images on disk
+		tempDir, err = os.MkdirTemp("", "layout-image-indexes")
+		h.AssertNil(t, err)
+	})
+
+	it.After(func() {
+		err := os.RemoveAll(tempDir)
+		h.AssertNil(t, err)
+	})
+
+	when("#Save", func() {
+		when("index exists on disk", func() {
+			var (
+				baseIndexPath string
+				localPath     string
+			)
+
+			it.Before(func() {
+				baseIndexPath = filepath.Join(testDataDir, "busybox-multi-platform")
+			})
+
+			when("#FromBaseImageIndex", func() {
+				it.Before(func() {
+					idx, err = layout.NewIndex("busybox-multi-platform", tempDir, imgutil.FromBaseImageIndex(baseIndexPath))
+					h.AssertNil(t, err)
+
+					localPath = filepath.Join(tempDir, "busybox-multi-platform")
+				})
+
+				// Getters test cases
+				when("#Save", func() {
+					it("image index saved on disk with the data from the base index", func() {
+						err = idx.Save()
+						h.AssertNil(t, err)
+
+						// assert linux/amd64 and linux/arm64 manifests were saved
+						index := h.ReadIndexManifest(t, localPath)
+						h.AssertEq(t, len(index.Manifests), 2)
+						h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
+						h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+					})
+				})
+			})
+
+			when("#FromBaseImageIndexInstance", func() {
+				it.Before(func() {
+					localIndex := h.ReadImageIndex(t, baseIndexPath)
+
+					idx, err = layout.NewIndex("busybox-multi-platform", tempDir, imgutil.FromBaseImageIndexInstance(localIndex))
+					h.AssertNil(t, err)
+
+					localPath = filepath.Join(tempDir, "busybox-multi-platform")
+				})
+
+				// Getters test cases
+				when("#Save", func() {
+					it("image index saved on disk with the data from the base index", func() {
+						err = idx.Save()
+						h.AssertNil(t, err)
+
+						// assert linux/amd64 and linux/arm64 manifests were saved
+						index := h.ReadIndexManifest(t, localPath)
+						h.AssertEq(t, len(index.Manifests), 2)
+						h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
+						h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+					})
+				})
 			})
 		})
 	})

@@ -70,7 +70,7 @@ func NewImage(repoName string, dockerClient DockerClient, ops ...imgutil.ImageOp
 }
 
 // NewIndex will return a new local Docker ImageIndex that can be modified and saved to a registry
-func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
+func NewIndex(repoName string, ops ...imgutil.Option) (idx *ImageIndex, err error) {
 	var idxOps = &imgutil.IndexOptions{}
 	for _, op := range ops {
 		if err = op(idxOps); err != nil {
@@ -105,7 +105,7 @@ func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
 		return nil, errors.New("no docker image index found")
 	}
 
-	cnbIndex, err := imgutil.NewCNBIndex(imgIdx, *idxOps)
+	cnbIndex, err := imgutil.NewCNBIndex(repoName, imgIdx, *idxOps)
 	if err != nil {
 		return idx, err
 	}

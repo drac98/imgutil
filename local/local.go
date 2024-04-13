@@ -55,6 +55,13 @@ func (i *Image) GetLayer(diffID string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
+	configFile, err := i.ConfigFile()
+	if err != nil {
+		return nil, err
+	}
+	if !contains(configFile.RootFS.DiffIDs, layerHash) {
+		return nil, imgutil.ErrLayerNotFound{DiffID: layerHash.String()}
+	}
 	layer, err := i.LayerByDiffID(layerHash)
 	if err == nil {
 		// this avoids downloading ALL the image layers from the daemon
@@ -63,13 +70,6 @@ func (i *Image) GetLayer(diffID string) (io.ReadCloser, error) {
 		if size, err := layer.Size(); err != nil && size != -1 {
 			return layer.Uncompressed()
 		}
-	}
-	configFile, err := i.ConfigFile()
-	if err != nil {
-		return nil, err
-	}
-	if !contains(configFile.RootFS.DiffIDs, layerHash) {
-		return nil, fmt.Errorf("image %q does not contain layer with diff ID %q", i.Name(), layerHash.String())
 	}
 	if err = i.ensureLayers(); err != nil {
 		return nil, err
@@ -163,6 +163,17 @@ func (i *Image) addLayerToStore(fromPath, withDiffID string) (v1.Layer, error) {
 	}
 	i.store.AddLayer(layer, diffID, fi.Size())
 	return layer, nil
+}
+
+func (i *Image) AddOrReuseLayerWithHistory(path string, diffID string, history v1.History) error {
+	prevLayerExists, err := i.PreviousImageHasLayer(diffID)
+	if err != nil {
+		return err
+	}
+	if !prevLayerExists {
+		return i.AddLayerWithDiffIDAndHistory(path, diffID, history)
+	}
+	return i.ReuseLayerWithHistory(diffID, history)
 }
 
 func (i *Image) Rebase(baseTopLayerDiffID string, withNewBase imgutil.Image) error {

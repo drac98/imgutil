@@ -29,6 +29,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/pkg/errors"
@@ -45,14 +46,14 @@ func RandString(n int) string {
 }
 
 // AssertEq asserts deep equality (and provides a useful difference as a test failure)
-func AssertEq(t *testing.T, actual, expected any) {
+func AssertEq(t *testing.T, actual, expected interface{}) {
 	t.Helper()
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Fatal(diff)
 	}
 }
 
-func AssertNotEq(t *testing.T, v1, v2 any) {
+func AssertNotEq(t *testing.T, v1, v2 interface{}) {
 	t.Helper()
 
 	if diff := cmp.Diff(v1, v2); diff == "" {
@@ -109,7 +110,7 @@ func AssertError(t *testing.T, actual error, expected string) {
 	}
 }
 
-func AssertNil(t *testing.T, actual any) {
+func AssertNil(t *testing.T, actual interface{}) {
 	t.Helper()
 	if actual != nil {
 		t.Fatalf("Expected nil: %s", actual)
@@ -574,6 +575,21 @@ func AssertDockerMediaTypes(t *testing.T, image v1.Image) {
 	for _, manifestLayer := range manifest.Layers {
 		AssertEq(t, manifestLayer.MediaType, types.DockerLayer)
 	}
+}
+
+func ReadImageIndex(t *testing.T, path string) v1.ImageIndex {
+	indexPath := filepath.Join(path, "index.json")
+	AssertPathExists(t, filepath.Join(path, "oci-layout"))
+	AssertPathExists(t, indexPath)
+
+	layoutPath, err := layout.FromPath(path)
+	AssertNil(t, err)
+
+	localIndex, err := layoutPath.ImageIndex()
+	AssertNil(t, err)
+	AssertNotNil(t, localIndex)
+
+	return localIndex
 }
 
 func ReadIndexManifest(t *testing.T, path string) *v1.IndexManifest {

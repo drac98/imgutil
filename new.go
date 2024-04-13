@@ -255,7 +255,7 @@ func NormalizedHistory(history []v1.History, nLayers int) []v1.History {
 }
 
 func prepareNewWindowsImageIfNeeded(image *CNBImageCore) error {
-	configFile, err := GetConfigFile(image)
+	configFile, err := getConfigFile(image)
 	if err != nil {
 		return err
 	}
@@ -289,11 +289,11 @@ func prepareNewWindowsImageIfNeeded(image *CNBImageCore) error {
 	return nil
 }
 
-func NewCNBIndex(v1Index v1.ImageIndex, ops IndexOptions) (*CNBIndex, error) {
+func NewCNBIndex(repoName string, v1Index v1.ImageIndex, ops IndexOptions) (*CNBIndex, error) {
 	index := &CNBIndex{
 		ImageIndex:       v1Index,
 		Insecure:         ops.Insecure,
-		RepoName:         ops.Reponame,
+		RepoName:         repoName,
 		XdgPath:          ops.XdgPath,
 		KeyChain:         ops.KeyChain,
 		Format:           ops.Format,
