@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/google/go-containerregistry/pkg/v1/validate"
 
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
 
 // CNBImageCore wraps a v1.Image and provides most of the methods necessary for the image to satisfy the Image interface.
@@ -96,7 +96,7 @@ func (i *CNBImageCore) GetLayer(diffID string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if !contains(configFile.RootFS.DiffIDs, layerHash) {
-		return nil, imgErrs.ErrLayerNotFound{DiffID: layerHash.String()}
+		return nil, cnbErrs.ErrLayerNotFound{DiffID: layerHash.String()}
 	}
 	hash, err := v1.NewHash(diffID)
 	if err != nil {

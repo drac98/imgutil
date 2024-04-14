@@ -13,7 +13,7 @@ import (
 	ggcrTypes "github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/pkg/errors"
 
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 
 	"github.com/buildpacks/imgutil"
 )
@@ -99,7 +99,7 @@ func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
 	}
 
 	if mfest == nil {
-		return idx, imgErrs.ErrManifestUndefined
+		return idx, cnbErrs.ErrManifestUndefined
 	}
 
 	if mfest.MediaType != ggcrTypes.DockerManifestList {

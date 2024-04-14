@@ -20,9 +20,8 @@ func TestUtils(t *testing.T) {
 }
 
 var (
-	repoName    = "some/image"
 	emptyImage  = empty.Image
-	os          = "some-os"
+	OS          = "some-os"
 	arch        = "some-arch"
 	variant     = "some-variant"
 	osVersion   = "some-os-version"
@@ -369,7 +368,7 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 	when("#MutateManifest", func() {
 		it("should mutate Manifest", func() {
 			img, err := imgutil.MutateManifest(emptyImage, func(c *v1.Manifest) {
-				c.Config.Platform.OS = os
+				c.Config.Platform.OS = OS
 				c.Config.Platform.Architecture = arch
 				c.Config.Platform.Variant = variant
 				c.Config.Platform.OSVersion = osVersion
@@ -384,7 +383,7 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, mfest)
 
-			h.AssertEq(t, mfest.Config.Platform.OS, os)
+			h.AssertEq(t, mfest.Config.Platform.OS, OS)
 			h.AssertEq(t, mfest.Config.Platform.Architecture, arch)
 			h.AssertEq(t, mfest.Config.Platform.Variant, variant)
 			h.AssertEq(t, mfest.Config.Platform.OSVersion, osVersion)
@@ -403,9 +402,9 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, mfest)
 
-			imgutil.MutateManifestFn(mfest, os, arch, variant, osVersion, features, osFeatures, urls, annotations)
+			imgutil.MutateManifestFn(mfest, OS, arch, variant, osVersion, features, osFeatures, urls, annotations)
 
-			h.AssertEq(t, mfest.Config.Platform.OS, os)
+			h.AssertEq(t, mfest.Config.Platform.OS, OS)
 			h.AssertEq(t, mfest.Config.Platform.Architecture, arch)
 			h.AssertEq(t, mfest.Config.Platform.Variant, variant)
 			h.AssertEq(t, mfest.Config.Platform.OSVersion, osVersion)

@@ -21,7 +21,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"golang.org/x/sync/errgroup"
 
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 
 	"github.com/buildpacks/imgutil"
 )
@@ -101,23 +101,23 @@ func (s *Store) Save(image *Image, withName string, withAdditionalNames ...strin
 		}
 		inspect, err = s.doSave(image, withName)
 		if err != nil {
-			saveErr := imgErrs.SaveError{}
+			saveErr := cnbErrs.SaveError{}
 			for _, n := range append([]string{withName}, withAdditionalNames...) {
-				saveErr.Errors = append(saveErr.Errors, imgErrs.SaveDiagnostic{ImageName: n, Cause: err})
+				saveErr.Errors = append(saveErr.Errors, cnbErrs.SaveDiagnostic{ImageName: n, Cause: err})
 			}
 			return "", saveErr
 		}
 	}
 
 	// tag additional names
-	var errs []imgErrs.SaveDiagnostic
+	var errs []cnbErrs.SaveDiagnostic
 	for _, n := range append([]string{withName}, withAdditionalNames...) {
 		if err = s.dockerClient.ImageTag(context.Background(), inspect.ID, n); err != nil {
-			errs = append(errs, imgErrs.SaveDiagnostic{ImageName: n, Cause: err})
+			errs = append(errs, cnbErrs.SaveDiagnostic{ImageName: n, Cause: err})
 		}
 	}
 	if len(errs) > 0 {
-		return "", imgErrs.SaveError{Errors: errs}
+		return "", cnbErrs.SaveError{Errors: errs}
 	}
 
 	return inspect.ID, nil

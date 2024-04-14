@@ -31,7 +31,7 @@ func testCnbImage(t *testing.T, when spec.G, it spec.S) {
 			h.AssertNotNil(t, cnbImg)
 
 			err = cnbImg.MutateConfigFile(func(c *v1.ConfigFile) {
-				c.OS = os
+				c.OS = OS
 				c.Architecture = arch
 				c.Variant = variant
 				c.OSVersion = osVersion
@@ -47,7 +47,7 @@ func testCnbImage(t *testing.T, when spec.G, it spec.S) {
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, mfest)
 
-			h.AssertEq(t, config.OS, os)
+			h.AssertEq(t, config.OS, OS)
 			h.AssertEq(t, config.Architecture, arch)
 			h.AssertEq(t, config.Variant, variant)
 			h.AssertEq(t, config.OSVersion, osVersion)
@@ -63,7 +63,7 @@ func testCnbImage(t *testing.T, when spec.G, it spec.S) {
 				URLs:        urls,
 				Annotations: annotations,
 				Platform: &v1.Platform{
-					OS:           os,
+					OS:           OS,
 					Architecture: arch,
 					Variant:      variant,
 					OSVersion:    osVersion,

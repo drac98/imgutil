@@ -17,7 +17,7 @@ import (
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/remote"
@@ -1836,7 +1836,7 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 					h.AssertError(t, err, fmt.Sprintf("failed to write image to the following tags: [%s:", failingName))
 
 					// check all but failing name
-					saveErr, ok := err.(imgErrs.SaveError)
+					saveErr, ok := err.(cnbErrs.SaveError)
 					h.AssertEq(t, ok, true)
 					h.AssertEq(t, len(saveErr.Errors), 1)
 					h.AssertEq(t, saveErr.Errors[0].ImageName, failingName)

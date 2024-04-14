@@ -13,7 +13,7 @@ import (
 	"github.com/sclevine/spec/report"
 
 	"github.com/buildpacks/imgutil"
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 	"github.com/buildpacks/imgutil/fakes"
 	h "github.com/buildpacks/imgutil/testhelpers"
 )
@@ -67,7 +67,7 @@ func testFake(t *testing.T, when spec.G, it spec.S) {
 					image := fakes.NewImage(repoName, "", nil)
 
 					err := image.Save(append([]string{badImageName}, additionalNames...)...)
-					saveErr, ok := err.(imgErrs.SaveError)
+					saveErr, ok := err.(cnbErrs.SaveError)
 					h.AssertEq(t, ok, true)
 					h.AssertEq(t, len(saveErr.Errors), 1)
 					h.AssertEq(t, saveErr.Errors[0].ImageName, badImageName)

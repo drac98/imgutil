@@ -18,7 +18,7 @@ import (
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/index"
@@ -1593,7 +1593,7 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 					h.AssertNil(t, err)
 					_, err = img.GetLayer(someSHA)
 					h.AssertError(t, err, fmt.Sprintf("failed to find layer with diff ID %q", someSHA))
-					_, ok := err.(imgErrs.ErrLayerNotFound)
+					_, ok := err.(cnbErrs.ErrLayerNotFound)
 					h.AssertEq(t, ok, true)
 				})
 			})
@@ -1607,7 +1607,7 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 				readCloser, err := image.GetLayer(someSHA)
 				h.AssertNil(t, readCloser)
 				h.AssertError(t, err, fmt.Sprintf("failed to find layer with diff ID %q", someSHA))
-				_, ok := err.(imgErrs.ErrLayerNotFound)
+				_, ok := err.(cnbErrs.ErrLayerNotFound)
 				h.AssertEq(t, ok, true)
 			})
 		})
@@ -1999,7 +1999,7 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 						err := img.Save(append([]string{failingName}, additionalRepoNames...)...)
 						h.AssertError(t, err, fmt.Sprintf("failed to write image to the following tags: [%s:", failingName))
 
-						saveErr, ok := err.(imgErrs.SaveError)
+						saveErr, ok := err.(cnbErrs.SaveError)
 						h.AssertEq(t, ok, true)
 						h.AssertEq(t, len(saveErr.Errors), 1)
 						h.AssertEq(t, saveErr.Errors[0].ImageName, failingName)

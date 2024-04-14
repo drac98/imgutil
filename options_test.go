@@ -30,7 +30,11 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		it("should return SecureTransport", func() {
 			roundTripper := imgutil.GetTransport(false)
 			trans := roundTripper.(*http.Transport)
-			h.AssertEq(t, trans.TLSClientConfig, (*tls.Config)(nil))
+			if trans.TLSClientConfig == nil {
+				h.AssertEq(t, trans.TLSClientConfig, (*tls.Config)(nil))
+			} else {
+				h.AssertEq(t, trans.TLSClientConfig.InsecureSkipVerify, false)
+			}
 		})
 	})
 	when("#IndexOptions", func() {
@@ -104,9 +108,9 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("#WithOS", func() {
 			it("should add image with OS", func() {
-				op := imgutil.WithOS(os)
+				op := imgutil.WithOS(OS)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.OS, os)
+				h.AssertEq(t, indexAddOptions.OS, OS)
 			})
 		})
 		when("#WithLocalImage", func() {

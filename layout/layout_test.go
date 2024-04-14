@@ -1190,11 +1190,12 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 					err = idx.Save()
 					h.AssertNil(t, err)
 
-					// assert linux/amd64 and linux/arm64 manifests were saved
+					// assert linux/amd64, windows/amd64 and linux/arm64 manifests were saved
 					index := h.ReadIndexManifest(t, localPath)
-					h.AssertEq(t, len(index.Manifests), 2)
+					h.AssertEq(t, len(index.Manifests), 3)
 					h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
-					h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+					h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:742dbd9d350ccda2de4d9990d710b8a5f672a89eda0f2a4ee5403d72cbb02de0")
+					h.AssertEq(t, index.Manifests[2].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
 				})
 			})
 
@@ -1212,11 +1213,12 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 					err = idx.Save()
 					h.AssertNil(t, err)
 
-					// assert linux/amd64 and linux/arm64 manifests were saved
+					// assert linux/amd64, windows/amd64 and linux/arm64 manifests were saved
 					index := h.ReadIndexManifest(t, localPath)
-					h.AssertEq(t, len(index.Manifests), 2)
+					h.AssertEq(t, len(index.Manifests), 3)
 					h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
-					h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+					h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:742dbd9d350ccda2de4d9990d710b8a5f672a89eda0f2a4ee5403d72cbb02de0")
+					h.AssertEq(t, index.Manifests[2].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
 				})
 			})
 		})
@@ -1281,8 +1283,8 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 						index := h.ReadIndexManifest(t, localPath)
 
 						// manifest was added
-						// initially it has 2 manifest + 1 new
-						h.AssertEq(t, len(index.Manifests), 3)
+						// initially it has 3 manifest + 1 new
+						h.AssertEq(t, len(index.Manifests), 4)
 					})
 				})
 			})
@@ -1373,8 +1375,8 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 					h.AssertNil(t, err)
 
 					index := h.ReadIndexManifest(t, localPath)
-					h.AssertEq(t, len(index.Manifests), 1)
-					h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+					h.AssertEq(t, len(index.Manifests), 2)
+					h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:742dbd9d350ccda2de4d9990d710b8a5f672a89eda0f2a4ee5403d72cbb02de0")
 				})
 			})
 		})
@@ -1394,7 +1396,7 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 					h.AssertNil(t, err)
 
 					idxFromString := parseImageIndex(t, indexString)
-					h.AssertEq(t, len(idxFromString.Manifests), 2)
+					h.AssertEq(t, len(idxFromString.Manifests), 3)
 				})
 			})
 		})

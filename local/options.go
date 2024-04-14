@@ -121,6 +121,7 @@ func WithPurge(purge bool) PushOption {
 func WithTags(tags ...string) PushOption {
 	return imgutil.WithTags(tags...)
 }
+
 // Push Index with format
 func EnsureFormat(format types.MediaType) PushOption {
 	return imgutil.UsingFormat(format)

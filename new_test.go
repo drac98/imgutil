@@ -34,7 +34,7 @@ func testNew(t *testing.T, when spec.G, it spec.S) {
 					Insecure: true,
 				},
 				KeyChain:               authn.DefaultKeychain,
-				XdgPath:                os,
+				XdgPath:                OS,
 				BaseImageIndexRepoName: arch,
 			}
 

@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/buildpacks/imgutil"
-	imgErrs "github.com/buildpacks/imgutil/errors"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
 
 func NewImage(path string, ops ...imgutil.ImageOption) (*Image, error) {
@@ -92,7 +92,7 @@ func NewIndex(repoName, path string, ops ...Option) (idx *ImageIndex, err error)
 			}
 
 			if mfest == nil {
-				return idx, imgErrs.ErrManifestUndefined
+				return idx, cnbErrs.ErrManifestUndefined
 			}
 		}
 	}
