@@ -14,7 +14,7 @@ import (
 )
 
 func TestCNBIndex(t *testing.T) {
-	spec.Run(t, "CNB_Index", testCnbIndex, spec.Parallel(), spec.Report(report.Terminal{}))
+	spec.Run(t, "CNBIndex", testCnbIndex, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
 func testCnbIndex(t *testing.T, when spec.G, it spec.S) {

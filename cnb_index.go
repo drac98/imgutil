@@ -856,7 +856,7 @@ func imageToV1Desc(img EditableImage) (desc v1.Descriptor, err error) {
 //
 // If referencing an ImageIndex, will add Platform Specific Image from the Index.
 // Use IndexAddOptions to alter behaviour for ImageIndex Reference.
-func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) error {
+func (h *CNBIndex) Add(name string, ops ...func(*IndexAddOptions) error) error {
 	var addOps = &IndexAddOptions{}
 	for _, op := range ops {
 		if err := op(addOps); err != nil {
@@ -879,14 +879,18 @@ func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) 
 		return path.AppendDescriptor(desc)
 	}
 
+	ref, auth, err := referenceForRepoName(h.KeyChain, name, h.Insecure)
+	if err != nil {
+		return err
+	}
+
 	// Fetch Descriptor of the given reference.
 	//
 	// This call is returns a v1.Descriptor with `Size`, `MediaType`, `Digest` fields only!!
 	// This is a lightweight call used for checking MediaType of given Reference
 	desc, err := remote.Head(
 		ref,
-		remote.WithAuthFromKeychain(h.KeyChain),
-		remote.WithTransport(GetTransport(h.Insecure)),
+		remote.WithAuth(auth),
 	)
 	if err != nil {
 		return err
@@ -901,8 +905,7 @@ func (h *CNBIndex) Add(ref name.Reference, ops ...func(*IndexAddOptions) error) 
 		// Get the Full Image from remote if the given Reference refers an Image
 		img, err := remote.Image(
 			ref,
-			remote.WithAuthFromKeychain(h.KeyChain),
-			remote.WithTransport(GetTransport(h.Insecure)),
+			remote.WithAuth(auth),
 		)
 		if err != nil {
 			return err
@@ -1409,8 +1412,13 @@ func (h *CNBIndex) Inspect() (string, error) {
 }
 
 // Removes Image/Index from ImageIndex.
-func (h *CNBIndex) Remove(ref name.Reference) (err error) {
-	hash, err := parseReferenceToHash(ref, h.KeyChain, h.Insecure)
+func (h *CNBIndex) Remove(repoName string) (err error) {
+	ref, auth, err := referenceForRepoName(h.KeyChain, repoName, h.Insecure)
+	if err != nil {
+		return err
+	}
+
+	hash, err := parseReferenceToHash(ref, auth)
 	if err != nil {
 		return err
 	}
@@ -1885,15 +1893,12 @@ func appendAnnotatedManifests(desc v1.Descriptor, imgDesc v1.Descriptor, path la
 	}
 }
 
-func parseReferenceToHash(ref name.Reference, keychain authn.Keychain, insecure bool) (hash v1.Hash, err error) {
+func parseReferenceToHash(ref name.Reference, auth authn.Authenticator) (hash v1.Hash, err error) {
 	switch v := ref.(type) {
 	case name.Tag:
 		desc, err := remote.Head(
 			v,
-			remote.WithAuthFromKeychain(keychain),
-			remote.WithTransport(
-				GetTransport(insecure),
-			),
+			remote.WithAuth(auth),
 		)
 		if err != nil {
 			return hash, err
@@ -1921,4 +1926,24 @@ func getIndexManifest(ii v1.ImageIndex) (mfest *v1.IndexManifest, err error) {
 	}
 
 	return mfest, err
+}
+
+// TODO this method is duplicated from remote.new file
+// referenceForRepoName
+func referenceForRepoName(keychain authn.Keychain, ref string, insecure bool) (name.Reference, authn.Authenticator, error) {
+	var auth authn.Authenticator
+	opts := []name.Option{name.WeakValidation}
+	if insecure {
+		opts = append(opts, name.Insecure)
+	}
+	r, err := name.ParseReference(ref, opts...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	auth, err = keychain.Resolve(r.Context().Registry)
+	if err != nil {
+		return nil, nil, err
+	}
+	return r, auth, nil
 }
