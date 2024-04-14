@@ -19,6 +19,7 @@ func TestUtils(t *testing.T) {
 }
 
 var (
+	repoName    = "some/image"
 	emptyImage  = empty.Image
 	os          = "some-os"
 	arch        = "some-arch"
@@ -449,6 +450,14 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 		})
 		it("should MakeFileNameSafe(Digest)", func() {
 			h.AssertEq(t, imgutil.MakeFileSafeName(imageNameWithDigest), expectedImageNameWithDigest)
+		})
+	})
+	when("#ValidateRepoName", func() {
+		it("should not return error when insecure", func() {
+			h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: true}}))
+		})
+		it("should not return an error when secure", func() {
+			h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: false}}))
 		})
 	})
 }

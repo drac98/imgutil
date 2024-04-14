@@ -185,7 +185,7 @@ func PullInsecure() func(options *IndexOptions) error {
 // WithFormat Create the image index with the following format
 func WithFormat(format types.MediaType) func(options *IndexOptions) error {
 	return func(o *IndexOptions) error {
-		if !format.IsIndex() {
+		if !(format.IsIndex() || format.IsImage()) {
 			return fmt.Errorf("unsupported media type encountered in image: '%s'", format)
 		}
 		o.Format = format

@@ -19,7 +19,7 @@ func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
 		}
 	}
 
-	if err = ValidateRepoName(repoName, idxOps); err != nil {
+	if err = imgutil.ValidateRepoName(repoName, idxOps); err != nil {
 		return idx, err
 	}
 

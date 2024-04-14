@@ -16,7 +16,6 @@ import (
 	imgErrs "github.com/buildpacks/imgutil/errors"
 
 	"github.com/buildpacks/imgutil"
-	"github.com/buildpacks/imgutil/index"
 )
 
 // NewImage returns a new image that can be modified and saved to a docker daemon
@@ -80,7 +79,7 @@ func NewIndex(repoName string, ops ...imgutil.Option) (idx *ImageIndex, err erro
 		}
 	}
 
-	if err = index.ValidateRepoName(repoName, idxOps); err != nil {
+	if err = imgutil.ValidateRepoName(repoName, idxOps); err != nil {
 		return idx, err
 	}
 

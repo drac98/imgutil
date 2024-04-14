@@ -42,7 +42,7 @@ test: layer/bcdhive_generated.go format lint
 	$(GOCMD) test -parallel=1 -count=1 -coverprofile=coverage.out -v ./...
 
 codecov: test
-	$(GOCMD) tool cover -html=coverage.out
+	$(GOCMD) tool cover -html=coverage.out -o ./coverage.html
 
 tidy:
 	$(GOCMD) mod tidy && cd tools && $(GOCMD) mod tidy -compat=1.17 && cd bcdhive_generator && $(GOCMD) mod tidy

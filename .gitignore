@@ -19,3 +19,4 @@
 tools/bcdhive_generator/.build
 
 .DS_Store
+coverage.*

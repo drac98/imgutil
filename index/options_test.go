@@ -1,63 +1,46 @@
-package imgutil_test
+package index_test
 
 import (
-	"crypto/tls"
-	"net/http"
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/v1/empty"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/fakes"
+	"github.com/buildpacks/imgutil/index"
 	h "github.com/buildpacks/imgutil/testhelpers"
 )
 
-func TestOptions(t *testing.T) {
-	spec.Run(t, "Options", testOptions, spec.Parallel(), spec.Report(report.Terminal{}))
+func TestIndexOptions(t *testing.T) {
+	spec.Run(t, "IndexOptions", testIndexOptions, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
-func testOptions(t *testing.T, when spec.G, it spec.S) {
-	when("#GetTransport", func() {
-		it("should return InsecureTransport", func() {
-			roundTripper := imgutil.GetTransport(true)
-			trans := roundTripper.(*http.Transport)
-			h.AssertEq(t, trans.TLSClientConfig.InsecureSkipVerify, true)
-		})
-		it("should return SecureTransport", func() {
-			roundTripper := imgutil.GetTransport(false)
-			trans := roundTripper.(*http.Transport)
-			h.AssertEq(t, trans.TLSClientConfig, (*tls.Config)(nil))
-		})
-	})
+var (
+	OS          = "some-os"
+	arch        = "some-arch"
+	variant     = "some-variant"
+	osVersion   = "some-os-version"
+	features    = []string{"feature1", "feature2"}
+	osFeatures  = []string{"osFeature1", "osFeature2"}
+	annotations = map[string]string{"key1": "value1", "key2": "value2"}
+	fakeHash    = v1.Hash{Algorithm: "sha256", Hex: "8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"}
+)
+
+func testIndexOptions(t *testing.T, when spec.G, it spec.S) {
 	when("#IndexOptions", func() {
 		var indexOptions *imgutil.IndexOptions
 		it.Before(func() {
 			indexOptions = &imgutil.IndexOptions{}
 		})
-		when("#FromBaseImageIndex", func() {
-			it("should set base image index", func() {
-				var baseImageIndex = "image-index"
-				op := imgutil.FromBaseImageIndex(baseImageIndex)
-				h.AssertNil(t, op(indexOptions))
-				h.AssertEq(t, indexOptions.BaseImageIndexRepoName, baseImageIndex)
-			})
-		})
-		when("#FromBaseImageIndexInstance", func() {
-			it("should set base image index from instance", func() {
-				op := imgutil.FromBaseImageIndexInstance(empty.Index)
-				h.AssertNil(t, op(indexOptions))
-				h.AssertEq(t, indexOptions.BaseIndex, empty.Index)
-			})
-		})
 		when("#WithKeychain", func() {
 			it("should auth with given keychain", func() {
 				h.AssertNil(t, indexOptions.KeyChain)
 
-				op := imgutil.WithKeychain(authn.DefaultKeychain)
+				op := index.WithKeychain(authn.DefaultKeychain)
 				h.AssertNil(t, op(indexOptions))
 				h.AssertNotNil(t, indexOptions.KeyChain)
 			})
@@ -65,28 +48,33 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		when("#WithXDGRuntimePath", func() {
 			it("should create index from xdgPath", func() {
 				var xdgPath = "xdg"
-				op := imgutil.WithXDGRuntimePath(xdgPath)
+				op := index.WithXDGRuntimePath(xdgPath)
 				h.AssertNil(t, op(indexOptions))
 				h.AssertEq(t, indexOptions.XdgPath, xdgPath)
 			})
 		})
 		when("#PullInsecure", func() {
 			it("should push to insecure index", func() {
-				op := imgutil.PullInsecure()
+				op := index.PullInsecure()
 				h.AssertNil(t, op(indexOptions))
 				h.AssertEq(t, indexOptions.Insecure, true)
 			})
 		})
 		when("#WithFormat", func() {
-			it("should create index with format", func() {
-				op := imgutil.WithFormat(types.OCIImageIndex)
+			it("should support index type", func() {
+				op := index.WithFormat(types.OCIImageIndex)
 				h.AssertNil(t, op(indexOptions))
 				h.AssertEq(t, indexOptions.Format, types.OCIImageIndex)
 			})
 			it("should return an error", func() {
-				op := imgutil.WithFormat(types.DockerConfigJSON)
+				op := index.WithFormat(types.OCIConfigJSON)
 				h.AssertNotNil(t, op(indexOptions))
 				h.AssertEq(t, indexOptions.Format, types.MediaType(""))
+			})
+			it("should support image type", func() {
+				op := index.WithFormat(types.DockerManifestSchema2)
+				h.AssertNil(t, op(indexOptions))
+				h.AssertEq(t, indexOptions.Format, types.DockerManifestSchema2)
 			})
 		})
 	})
@@ -97,16 +85,16 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("#WithAll", func() {
 			it("should add all images", func() {
-				op := imgutil.WithAll(true)
+				op := index.WithAll(true)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, indexAddOptions.All, true)
 			})
 		})
 		when("#WithOS", func() {
 			it("should add image with OS", func() {
-				op := imgutil.WithOS(os)
+				op := index.WithOS(OS)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.OS, os)
+				h.AssertEq(t, indexAddOptions.OS, OS)
 			})
 		})
 		when("#WithLocalImage", func() {
@@ -115,7 +103,7 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 				h.AssertNil(t, indexAddOptions.Image)
 
 				img := fakes.NewImage("image", fakeHash.String(), fakes.NewIdentifier(fakeHash.String()))
-				op := imgutil.WithLocalImage(img)
+				op := index.WithLocalImage(img)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, indexAddOptions.Local, true)
 				h.AssertNotNil(t, indexAddOptions.Image)
@@ -123,42 +111,42 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("#WithArchitecture", func() {
 			it("should add image with Architecture", func() {
-				op := imgutil.WithArchitecture(arch)
+				op := index.WithArchitecture(arch)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, indexAddOptions.Arch, arch)
 			})
 		})
 		when("#WithVariant", func() {
 			it("should add image with Variant", func() {
-				op := imgutil.WithVariant(variant)
+				op := index.WithVariant(variant)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, indexAddOptions.Variant, variant)
 			})
 		})
 		when("#WithOSVersion", func() {
 			it("should add image with OSVersion", func() {
-				op := imgutil.WithOSVersion(osVersion)
+				op := index.WithOSVersion(osVersion)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, indexAddOptions.OSVersion, osVersion)
 			})
 		})
 		when("#WithFeatures", func() {
 			it("should add image with Features", func() {
-				op := imgutil.WithFeatures(features)
+				op := index.WithFeatures(features)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, imgutil.SliceContains(indexAddOptions.Features, features), true)
 			})
 		})
 		when("#WithOSFeatures", func() {
 			it("should add image with OSFeatures", func() {
-				op := imgutil.WithOSFeatures(osFeatures)
+				op := index.WithOSFeatures(osFeatures)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, imgutil.SliceContains(indexAddOptions.OSFeatures, osFeatures), true)
 			})
 		})
 		when("#WithAnnotations", func() {
 			it("should add image with Annotations", func() {
-				op := imgutil.WithAnnotations(annotations)
+				op := index.WithAnnotations(annotations)
 				h.AssertNil(t, op(indexAddOptions))
 				h.AssertEq(t, imgutil.MapContains(indexAddOptions.Annotations, annotations), true)
 			})
@@ -171,33 +159,33 @@ func testOptions(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("#WithPurge", func() {
 			it("should purge index", func() {
-				op := imgutil.WithPurge(true)
+				op := index.WithPurge(true)
 				h.AssertNil(t, op(indexPushOptions))
 				h.AssertEq(t, indexPushOptions.Purge, true)
 			})
 		})
 		when("#WithTags", func() {
 			it("should push with tags", func() {
-				op := imgutil.WithTags(features...)
+				op := index.WithTags(features...)
 				h.AssertNil(t, op(indexPushOptions))
 				h.AssertEq(t, imgutil.SliceContains(indexPushOptions.Tags, features), true)
 			})
 		})
 		when("#WithInsecure", func() {
 			it("should push to insecure", func() {
-				op := imgutil.WithInsecure(true)
+				op := index.WithInsecure(true)
 				h.AssertNil(t, op(indexPushOptions))
 				h.AssertEq(t, indexPushOptions.Insecure, true)
 			})
 		})
 		when("#UsingFormat", func() {
 			it("should push with format", func() {
-				op := imgutil.UsingFormat(types.OCIImageIndex)
+				op := index.UsingFormat(types.OCIImageIndex)
 				h.AssertNil(t, op(indexPushOptions))
 				h.AssertEq(t, indexPushOptions.Format, types.OCIImageIndex)
 			})
 			it("should return an error", func() {
-				op := imgutil.UsingFormat(types.OCIManifestSchema1)
+				op := index.UsingFormat(types.OCIManifestSchema1)
 				h.AssertNotNil(t, op(indexPushOptions))
 				h.AssertEq(t, indexPushOptions.Format, types.MediaType(""))
 			})
