@@ -15,7 +15,7 @@ import (
 )
 
 func TestCNBImage(t *testing.T) {
-	spec.Run(t, "CNB_Image", testCnbImage, spec.Parallel(), spec.Report(report.Terminal{}))
+	spec.Run(t, "CNBImage", testCnbImage, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
 var digest = "sha256:8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"

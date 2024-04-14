@@ -762,16 +762,13 @@ func (h *CNBIndex) URLs(digest name.Digest) (urls []string, err error) {
 		return urlSet.StringSlice(), nil
 	}
 
-	if urls, err = h.getIndexURLs(hash); err == nil {
+	if urls, err = h.getIndexURLs(hash); err == nil || imgErrs.IsPlatformError(err, hash.String()) {
 		return urls, nil
 	}
 
-	urls, format, err := h.getImageURLs(hash)
-	if err == nil {
-		return urls, nil
-	}
-
-	if err == imgErrs.NewPlatformError(imgErrs.URLs, format, digest.Identifier()) {
+	// OCI ImageIndex can have Docker Images and vice versa
+	// Check If it is Platform error, if true return error.
+	if urls, _, err = h.getImageURLs(hash); err == nil || imgErrs.IsPlatformError(err, hash.String()) {
 		return urls, err
 	}
 
@@ -1893,6 +1890,8 @@ func appendAnnotatedManifests(desc v1.Descriptor, imgDesc v1.Descriptor, path la
 	}
 }
 
+// Returns v1.Hash from the name.Digest.
+// If name.Reference is name.Tag, returns the v1.Hash of the Tag.
 func parseReferenceToHash(ref name.Reference, auth authn.Authenticator) (hash v1.Hash, err error) {
 	switch v := ref.(type) {
 	case name.Tag:

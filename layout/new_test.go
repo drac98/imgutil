@@ -224,7 +224,6 @@ func testLayoutNewImageIndex(t *testing.T, when spec.G, it spec.S) {
 			when("#URLs", func() {
 				when("linux/amd64", func() {
 					it("existing annotations are readable", func() {
-						t.Skip("Do we really want to support this now???, its failing")
 						attributes, err = idx.URLs(linuxAmd64Digest)
 						h.AssertNil(t, err)
 						h.AssertContains(t, attributes, "https://foo.bar")

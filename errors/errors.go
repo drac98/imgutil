@@ -18,16 +18,20 @@ var (
 	ErrNoImageFoundWithGivenPlatform = errors.New("no image found for specified platform")
 )
 
-func (p *platformUndefined) Error() string {
+func (p platformUndefined) Error() string {
 	return fmt.Sprintf("image %s is undefined for %s ImageIndex (digest: %s)", p.platform, indexMediaType(p.format), p.digest)
 }
 
-func (d *digestNotFound) Error() string {
+func (d digestNotFound) Error() string {
 	return fmt.Sprintf(`no image or image index found for digest "%s"`, d.digest)
 }
 
-func (f *unknownMediaType) Error() string {
+func (f unknownMediaType) Error() string {
 	return fmt.Sprintf("unsupported media type encountered in image: '%s'", f.format)
+}
+
+func IsPlatformError(err error, hash string) bool {
+	return err.Error() == NewPlatformError(URLs, types.DockerManifestList, hash).Error() || err.Error() == NewPlatformError(URLs, types.OCIImageIndex, hash).Error()
 }
 
 func indexMediaType(format types.MediaType) string {

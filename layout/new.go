@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/buildpacks/imgutil"
+	imgErrs "github.com/buildpacks/imgutil/errors"
 )
 
 func NewImage(path string, ops ...imgutil.ImageOption) (*Image, error) {
@@ -91,7 +92,7 @@ func NewIndex(repoName, path string, ops ...imgutil.Option) (idx *ImageIndex, er
 			}
 
 			if mfest == nil {
-				return idx, errors.New("encountered unexpected error while parsing image: manifest or index manifest is nil")
+				return idx, imgErrs.ErrManifestUndefined
 			}
 		}
 	}

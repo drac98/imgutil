@@ -10,6 +10,7 @@
         "org.opencontainers.image.url": "https://hub.docker.com/_/busybox",
         "org.opencontainers.image.version": "1.36.1-glibc"
       },
+      "urls": ["https://foo.bar"],
       "digest": "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0",
       "mediaType": "application/vnd.oci.image.manifest.v1+json",
       "platform": {
@@ -19,12 +20,6 @@
         "os.features": ["os-feature-1", "os-feature-2"],
         "variant": "v1",
         "features": ["feature-1", "feature-2"]
-      },
-      "subject": {
-        "mediaType": "application/vnd.oci.image.manifest.v1+json",
-        "digest": "sha256:8be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0",
-        "size": 100,
-        "urls": ["https://foo.bar"]
       },
       "size": 610
     },
