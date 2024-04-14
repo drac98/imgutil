@@ -43,6 +43,10 @@ func (e SaveError) Error() string {
 	return fmt.Sprintf("failed to write image to the following tags: %s", strings.Join(errors, ","))
 }
 
+func (e ErrLayerNotFound) Error() string {
+	return fmt.Sprintf("failed to find layer with diff ID %q", e.DiffID)
+}
+
 func indexMediaType(format types.MediaType) string {
 	switch format {
 	case types.DockerManifestList, types.DockerManifestSchema2:

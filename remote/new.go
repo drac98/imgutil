@@ -61,7 +61,7 @@ func NewImage(repoName string, keychain authn.Keychain, ops ...imgutil.ImageOpti
 }
 
 // NewIndex returns a new ImageIndex from the registry that can be modified and saved to local file system
-func NewIndex(repoName string, ops ...imgutil.Option) (idx *ImageIndex, err error) {
+func NewIndex(repoName string, ops ...Option) (idx *ImageIndex, err error) {
 	var idxOps = &imgutil.IndexOptions{}
 	for _, op := range ops {
 		if err = op(idxOps); err != nil {
@@ -78,7 +78,7 @@ func NewIndex(repoName string, ops ...imgutil.Option) (idx *ImageIndex, err erro
 		return idx, err
 	}
 
-	desc, err := remote.Get(
+	imgIdx, err := remote.Index(
 		ref,
 		remote.WithAuthFromKeychain(idxOps.KeyChain),
 		remote.WithTransport(imgutil.GetTransport(idxOps.Insecure)),
@@ -87,19 +87,10 @@ func NewIndex(repoName string, ops ...imgutil.Option) (idx *ImageIndex, err erro
 		return idx, err
 	}
 
-	imgIdx, err := desc.ImageIndex()
-	if err != nil {
-		return idx, err
-	}
-
 	cnbIndex, err := imgutil.NewCNBIndex(repoName, imgIdx, *idxOps)
-	if err != nil {
-		return idx, err
-	}
-
 	return &ImageIndex{
 		CNBIndex: cnbIndex,
-	}, nil
+	}, err
 }
 
 func defaultPlatform() imgutil.Platform {

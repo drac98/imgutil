@@ -112,11 +112,3 @@ type V1Image struct {
 	v1.Image
 	config v1.Descriptor
 }
-
-type ErrLayerNotFound struct {
-	DiffID string
-}
-
-func (e ErrLayerNotFound) Error() string {
-	return fmt.Sprintf("failed to find layer with diff ID %q", e.DiffID)
-}

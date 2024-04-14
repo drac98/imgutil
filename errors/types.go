@@ -37,3 +37,7 @@ type SaveDiagnostic struct {
 type SaveError struct {
 	Errors []SaveDiagnostic
 }
+
+type ErrLayerNotFound struct {
+	DiffID string
+}

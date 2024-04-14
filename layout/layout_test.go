@@ -1401,7 +1401,7 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 	})
 }
 
-func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...imgutil.Option) imgutil.ImageIndex {
+func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...layout.Option) imgutil.ImageIndex {
 	idx, err := layout.NewIndex(repoName, tmpDir, ops...)
 	h.AssertNil(t, err)
 

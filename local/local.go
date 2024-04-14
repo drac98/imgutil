@@ -13,6 +13,8 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
+	imgErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -60,7 +62,7 @@ func (i *Image) GetLayer(diffID string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if !contains(configFile.RootFS.DiffIDs, layerHash) {
-		return nil, imgutil.ErrLayerNotFound{DiffID: layerHash.String()}
+		return nil, imgErrs.ErrLayerNotFound{DiffID: layerHash.String()}
 	}
 	layer, err := i.LayerByDiffID(layerHash)
 	if err == nil {

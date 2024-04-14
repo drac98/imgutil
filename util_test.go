@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -395,7 +396,10 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 	})
 	when("#MutateManifestFn", func() {
 		it("should mutate image", func() {
-			mfest, err := emptyImage.Manifest()
+			randImg, err := random.Image(1024, 2)
+			h.AssertNil(t, err)
+
+			mfest, err := randImg.Manifest()
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, mfest)
 
