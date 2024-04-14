@@ -4,6 +4,7 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 
@@ -137,4 +138,9 @@ func WithPurge(purge bool) PushOption {
 // Push the Index with given format
 func WithTags(tags ...string) PushOption {
 	return imgutil.WithTags(tags...)
+}
+
+// Push Index with format
+func EnsureFormat(format types.MediaType) PushOption {
+	return imgutil.UsingFormat(format)
 }
