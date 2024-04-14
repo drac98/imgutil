@@ -965,7 +965,7 @@ func (h *CNBIndex) Add(name string, ops ...func(*IndexAddOptions) error) error {
 			}
 
 			var iMap sync.Map
-			errs := SaveError{}
+			errs := imgErrs.SaveError{}
 			// Add all the images from Nested ImageIndexes
 			if err = h.addAllImages(idx, addOps.Annotations, &iMap); err != nil {
 				return err
@@ -993,7 +993,7 @@ func (h *CNBIndex) Add(name string, ops ...func(*IndexAddOptions) error) error {
 
 				// Append All the images within the nested ImageIndexes
 				if err = path.AppendDescriptor(desc); err != nil {
-					errs.Errors = append(errs.Errors, SaveDiagnostic{
+					errs.Errors = append(errs.Errors, imgErrs.SaveDiagnostic{
 						Cause: err,
 					})
 				}
@@ -1253,7 +1253,7 @@ func (h *CNBIndex) Save() error {
 		return err
 	}
 
-	var errs SaveError
+	var errs imgErrs.SaveError
 	for hash, desc := range h.annotate.Instance {
 		// If the digest matches an Image added annotate the Image and Save Locally
 		if imgDesc, ok := h.images[hash]; ok {
@@ -1837,7 +1837,7 @@ func updatePlatform(config *v1.ConfigFile, platform *v1.Platform) error {
 }
 
 // Annotate and Append Manifests to ImageIndex.
-func appendAnnotatedManifests(desc v1.Descriptor, imgDesc v1.Descriptor, path layout.Path, errs *SaveError) {
+func appendAnnotatedManifests(desc v1.Descriptor, imgDesc v1.Descriptor, path layout.Path, errs *imgErrs.SaveError) {
 	if len(desc.Annotations) != 0 && (imgDesc.MediaType == types.OCIImageIndex || imgDesc.MediaType == types.OCIManifestSchema1) {
 		if len(imgDesc.Annotations) == 0 {
 			imgDesc.Annotations = make(map[string]string, 0)
@@ -1884,7 +1884,7 @@ func appendAnnotatedManifests(desc v1.Descriptor, imgDesc v1.Descriptor, path la
 
 	path.RemoveDescriptors(match.Digests(imgDesc.Digest))
 	if err := path.AppendDescriptor(imgDesc); err != nil {
-		errs.Errors = append(errs.Errors, SaveDiagnostic{
+		errs.Errors = append(errs.Errors, imgErrs.SaveDiagnostic{
 			Cause: err,
 		})
 	}

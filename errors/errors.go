@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
@@ -32,6 +33,14 @@ func (f unknownMediaType) Error() string {
 
 func IsPlatformError(err error, hash string) bool {
 	return err.Error() == NewPlatformError(URLs, types.DockerManifestList, hash).Error() || err.Error() == NewPlatformError(URLs, types.OCIImageIndex, hash).Error()
+}
+
+func (e SaveError) Error() string {
+	var errors []string
+	for _, d := range e.Errors {
+		errors = append(errors, fmt.Sprintf("[%s: %s]", d.ImageName, d.Cause.Error()))
+	}
+	return fmt.Sprintf("failed to write image to the following tags: %s", strings.Join(errors, ","))
 }
 
 func indexMediaType(format types.MediaType) string {

@@ -4,6 +4,8 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 
+	imgErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -52,7 +54,7 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 
 	var (
 		pathsToSave = append([]string{name}, additionalNames...)
-		diagnostics []imgutil.SaveDiagnostic
+		diagnostics []imgErrs.SaveDiagnostic
 	)
 	for _, path := range pathsToSave {
 		layoutPath, err := initEmptyIndexAt(path)
@@ -63,11 +65,11 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 			i.Image,
 			ops...,
 		); err != nil {
-			diagnostics = append(diagnostics, imgutil.SaveDiagnostic{ImageName: i.Name(), Cause: err})
+			diagnostics = append(diagnostics, imgErrs.SaveDiagnostic{ImageName: i.Name(), Cause: err})
 		}
 	}
 	if len(diagnostics) > 0 {
-		return imgutil.SaveError{Errors: diagnostics}
+		return imgErrs.SaveError{Errors: diagnostics}
 	}
 
 	return nil

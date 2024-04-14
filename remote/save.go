@@ -8,6 +8,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/static"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
+	imgErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -56,15 +58,15 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 	}
 
 	// save
-	var diagnostics []imgutil.SaveDiagnostic
+	var diagnostics []imgErrs.SaveDiagnostic
 	allNames := append([]string{name}, additionalNames...)
 	for _, n := range allNames {
 		if err := i.doSave(n); err != nil {
-			diagnostics = append(diagnostics, imgutil.SaveDiagnostic{ImageName: n, Cause: err})
+			diagnostics = append(diagnostics, imgErrs.SaveDiagnostic{ImageName: n, Cause: err})
 		}
 	}
 	if len(diagnostics) > 0 {
-		return imgutil.SaveError{Errors: diagnostics}
+		return imgErrs.SaveError{Errors: diagnostics}
 	}
 	return nil
 }

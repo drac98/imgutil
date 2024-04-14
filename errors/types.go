@@ -28,3 +28,12 @@ type digestNotFound struct {
 type unknownMediaType struct {
 	format types.MediaType
 }
+
+type SaveDiagnostic struct {
+	ImageName string
+	Cause     error
+}
+
+type SaveError struct {
+	Errors []SaveDiagnostic
+}

@@ -3,7 +3,6 @@ package imgutil
 import (
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -112,23 +111,6 @@ type Platform struct {
 type V1Image struct {
 	v1.Image
 	config v1.Descriptor
-}
-
-type SaveDiagnostic struct {
-	ImageName string
-	Cause     error
-}
-
-type SaveError struct {
-	Errors []SaveDiagnostic
-}
-
-func (e SaveError) Error() string {
-	var errors []string
-	for _, d := range e.Errors {
-		errors = append(errors, fmt.Sprintf("[%s: %s]", d.ImageName, d.Cause.Error()))
-	}
-	return fmt.Sprintf("failed to write image to the following tags: %s", strings.Join(errors, ","))
 }
 
 type ErrLayerNotFound struct {
