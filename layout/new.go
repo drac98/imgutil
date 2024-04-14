@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/types"
@@ -73,7 +74,7 @@ func NewIndex(repoName, path string, ops ...imgutil.Option) (idx *ImageIndex, er
 		}
 	}
 
-	if err = imgutil.ValidateRepoName(repoName, idxOps); err != nil {
+	if err = validateRepoName(repoName, idxOps); err != nil {
 		return idx, err
 	}
 
@@ -198,4 +199,13 @@ func imageFromIndex(index v1.ImageIndex, platform imgutil.Platform) (v1.Image, e
 	}
 
 	return index.Image(manifest.Digest)
+}
+
+func validateRepoName(repoName string, o *imgutil.IndexOptions) (err error) {
+	if o.Insecure {
+		_, err = name.ParseReference(repoName, name.Insecure, name.WeakValidation)
+	} else {
+		_, err = name.ParseReference(repoName, name.WeakValidation)
+	}
+	return err
 }
