@@ -491,7 +491,7 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 		it("should save ImageIndex", func() {})
 		it("should save Annotated ImageIndex", func() {})
 		it("should not add images with duplicate digest", func() {})
-		it("should save changes in expected manner", func() {})
+		it("should save changes with annotated changes and by removing requested to remove images", func() {})
 	})
 	when("#Push", func() {
 		var (
@@ -722,17 +722,6 @@ func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...layout
 	return idx
 }
 
-// func newRepoName() string {
-// 	return "test-layout-index-" + h.RandString(10)
-// }
-
 func newTestImageIndexName(name string) string {
 	return dockerRegistry.RepoName(name + "-" + h.RandString(10))
 }
-
-// func parseImageIndex(t *testing.T, index string) *v1.IndexManifest {
-// 	r := strings.NewReader(index)
-// 	idx, err := v1.ParseIndexManifest(r)
-// 	h.AssertNil(t, err)
-// 	return idx
-// }
