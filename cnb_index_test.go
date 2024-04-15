@@ -34,18 +34,20 @@ func TestCNBIndex(t *testing.T) {
 var (
 	dockerRegistry *h.DockerRegistry
 
-	repoName               = "busybox-multi-platform"
-	NotFoundDigest, _      = name.NewDigest("some/not-found-digest@sha256:4f2fa90168e3ce7022d69a6d67f3f5ae5df1b92d801d2c51ffee341af635adb4")
-	FoundDigest, _         = name.NewDigest(repoName + "@sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
-	DockerFoundDigest, _   = name.NewDigest(repoName + "@sha256:742dbd9d350ccda2de4d9990d710b8a5f672a89eda0f2a4ee5403d72cbb02de0")
-	FoundDigestOS          = "linux"
-	FoundDigestArch        = "arm"
-	FoundDigestVariant     = "v7"
-	FoundDigestOSVersion   = "1.2.3"
-	FoundDigestFeatures    = []string{"feature-3", "feature-4"}
-	FoundDigestOSFeatures  = []string{"os-feature-3", "os-feature-4"}
-	FoundDigestURLs        = []string{"https://bar.foo"}
-	FoundDigestAnnotations = map[string]string{
+	repoName                  = "busybox-multi-platform"
+	NotFoundDigest, _         = name.NewDigest("some/not-found-digest@sha256:4f2fa90168e3ce7022d69a6d67f3f5ae5df1b92d801d2c51ffee341af635adb4")
+	FoundDigest, _            = name.NewDigest(repoName + "@sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
+	DockerFoundDigest, _      = name.NewDigest(repoName + "@sha256:742dbd9d350ccda2de4d9990d710b8a5f672a89eda0f2a4ee5403d72cbb02de0")
+	IndexFoundDigest, _       = name.NewDigest(repoName + "@sha256:190132d348f8a81e2f67b6beb447a94d50adecfeb9afea638951faacee4ef987")
+	DockerIndexFoundDigest, _ = name.NewDigest(repoName + "@sha256:6528525e9f75c69e4706eed1d383da9d9535d831e6f9915b32cb795aeaa0e7a0")
+	FoundDigestOS             = "linux"
+	FoundDigestArch           = "arm"
+	FoundDigestVariant        = "v7"
+	FoundDigestOSVersion      = "1.2.3"
+	FoundDigestFeatures       = []string{"feature-3", "feature-4"}
+	FoundDigestOSFeatures     = []string{"os-feature-3", "os-feature-4"}
+	FoundDigestURLs           = []string{"https://bar.foo"}
+	FoundDigestAnnotations    = map[string]string{
 		"com.docker.official-images.bashbrew.arch": "arm32v7",
 		"org.opencontainers.image.base.name":       "scratch",
 		"org.opencontainers.image.created":         "2024-02-28T00:44:18Z",
@@ -210,69 +212,214 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 	// Setters
 
 	when("#SetOS", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetOS for ImageIndex with digest", func() {})
-		it("should #SetOS for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetOS for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetOS(IndexFoundDigest, OS))
+
+			os, err := idx.OS(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, os, OS)
+		})
+		it("should #SetOS for Image with digest", func() {
+			h.AssertNil(t, idx.SetOS(FoundDigest, OS))
+
+			os, err := idx.OS(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, os, OS)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetOS(NotFoundDigest, OS))
+		})
 	})
 	when("#SetArchitecture", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetArchitecture for ImageIndex with digest", func() {})
-		it("should #SetArchitecture for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetArchitecture for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetArchitecture(IndexFoundDigest, arch))
+
+			result, err := idx.Architecture(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, arch)
+		})
+		it("should #SetArchitecture for Image with digest", func() {
+			h.AssertNil(t, idx.SetArchitecture(FoundDigest, arch))
+
+			result, err := idx.Architecture(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, arch)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetArchitecture(NotFoundDigest, arch))
+		})
 	})
 	when("#SetVariant", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetVariant for ImageIndex with digest", func() {})
-		it("should #SetVariant for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetVariant for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetVariant(IndexFoundDigest, variant))
+
+			result, err := idx.Variant(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, variant)
+		})
+		it("should #SetVariant for Image with digest", func() {
+			h.AssertNil(t, idx.SetVariant(FoundDigest, variant))
+
+			result, err := idx.Variant(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, variant)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetVariant(NotFoundDigest, variant))
+		})
 	})
 	when("#SetOSVersion", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetOSVersion for ImageIndex with digest", func() {})
-		it("should #SetOSVersion for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetOSVersion for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetOSVersion(IndexFoundDigest, osVersion))
+
+			result, err := idx.OSVersion(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, osVersion)
+		})
+		it("should #SetOSVersion for Image with digest", func() {
+			h.AssertNil(t, idx.SetOSVersion(FoundDigest, osVersion))
+
+			result, err := idx.OSVersion(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, result, osVersion)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetOSVersion(NotFoundDigest, osVersion))
+		})
 	})
 	when("#SetFeatures", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetFeatures for ImageIndex with digest", func() {})
-		it("should #SetFeatures for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetFeatures for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetFeatures(IndexFoundDigest, features))
+
+			result, err := idx.Features(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, features), true)
+		})
+		it("should #SetFeatures for Image with digest", func() {
+			h.AssertNil(t, idx.SetFeatures(FoundDigest, features))
+
+			result, err := idx.Features(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, features), true)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetFeatures(NotFoundDigest, features))
+		})
 		when("duplicates", func() {
-			it("should not add duplicate #Features", func() {})
+			it("should not add duplicate #Features", func() {
+				features := []string{"feature1", "feature2", "feature1", "feature2"}
+				h.AssertNil(t, idx.SetFeatures(FoundDigest, features))
+
+				result, err := idx.Features(FoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, len(result), 2)
+			})
 		})
 	})
 	when("#SetOSFeatures", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetOSFeatures for ImageIndex with digest", func() {})
-		it("should #SetOSFeatures for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetOSFeatures for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetOSFeatures(IndexFoundDigest, osFeatures))
+
+			result, err := idx.OSFeatures(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, osFeatures), true)
+		})
+		it("should #SetOSFeatures for Image with digest", func() {
+			h.AssertNil(t, idx.SetOSFeatures(FoundDigest, osFeatures))
+
+			result, err := idx.OSFeatures(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, osFeatures), true)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetOSFeatures(NotFoundDigest, osFeatures))
+		})
 		when("duplicates", func() {
-			it("should not add duplicate #OSFeatures", func() {})
+			it("should not add duplicate #OSFeatures", func() {
+				osFeatures := []string{"os-feature1", "os-feature2", "os-feature1", "os-feature2"}
+				h.AssertNil(t, idx.SetOSFeatures(FoundDigest, osFeatures))
+
+				result, err := idx.OSFeatures(FoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, len(result), 2)
+			})
 		})
 	})
 	when("#SetURLs", func() {
-		it("should return an error when image is removed", func() {})
-		it("should #SetURLs for ImageIndex with digest", func() {})
-		it("should #SetURLs for Image with digest", func() {})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should #SetURLs for ImageIndex with digest", func() {
+			h.AssertNil(t, idx.SetURLs(IndexFoundDigest, urls))
+
+			result, err := idx.URLs(IndexFoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, urls), true)
+		})
+		it("should #SetURLs for Image with digest", func() {
+			h.AssertNil(t, idx.SetURLs(FoundDigest, urls))
+
+			result, err := idx.URLs(FoundDigest)
+			h.AssertNil(t, err)
+			h.AssertEq(t, imgutil.SliceContains(result, urls), true)
+		})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetURLs(NotFoundDigest, urls))
+		})
 		when("duplicates", func() {
-			it("should not add duplicate #URLs", func() {})
+			it("should not add duplicate #URLs", func() {
+				urls := []string{"url1", "url2", "url1", "url2"}
+				h.AssertNil(t, idx.SetURLs(FoundDigest, urls))
+
+				result, err := idx.URLs(FoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, len(result), 2)
+			})
 		})
 	})
 	when("#SetAnnotations", func() {
-		it("should return an error when image is removed", func() {})
 		when("OCI", func() {
-			it("should #SetAnnotations for ImageIndex with digest", func() {})
-			it("should #SetAnnotations for Image with digest", func() {})
+			it("should #SetAnnotations for ImageIndex with digest", func() {
+				h.AssertNil(t, idx.SetAnnotations(IndexFoundDigest, annotations))
+
+				result, err := idx.Annotations(IndexFoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, imgutil.MapContains(result, annotations), true)
+			})
+			it("should #SetAnnotations for Image with digest", func() {
+				h.AssertNil(t, idx.SetAnnotations(FoundDigest, annotations))
+
+				result, err := idx.Annotations(FoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, imgutil.MapContains(result, annotations), true)
+			})
 		})
 		when("docker", func() {
-			it("should not #SetAnnotations for ImageIndex with digest", func() {})
-			it("should not #SetAnnotations for Image with digest", func() {})
+			it("should not #SetAnnotations for ImageIndex with digest", func() {
+				h.AssertNil(t, idx.SetAnnotations(DockerIndexFoundDigest, annotations))
+
+				result, err := idx.Annotations(DockerIndexFoundDigest)
+				h.AssertNotNil(t, err)
+				h.AssertEq(t, imgutil.MapContains(result, annotations), false)
+			})
+			it("should not #SetAnnotations for Image with digest", func() {
+				h.AssertNil(t, idx.SetAnnotations(DockerFoundDigest, annotations))
+
+				result, err := idx.Annotations(DockerFoundDigest)
+				h.AssertNotNil(t, err)
+				h.AssertEq(t, imgutil.MapContains(result, annotations), false)
+			})
 		})
-		it("should return an error when no image or index found with given digest", func() {})
+		it("should return an error when no image or index found with given digest", func() {
+			h.AssertNotNil(t, idx.SetAnnotations(NotFoundDigest, annotations))
+		})
 		when("duplicates", func() {
-			it("should not add duplicate #Annotations", func() {})
+			it("should not add duplicate #Annotations", func() {
+				annos := map[string]string{"key1": "value1", "key2": "value2"}
+				h.AssertNil(t, idx.SetAnnotations(FoundDigest, annos))
+				h.AssertNil(t, idx.SetAnnotations(FoundDigest, annos))
+
+				result, err := idx.Annotations(FoundDigest)
+				h.AssertNil(t, err)
+				h.AssertEq(t, len(result), 2)
+			})
 		})
 	})
 
@@ -282,6 +429,7 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 		when("Local", func() {
 			it("should return an error if Index not saved", func() {})
 			it("should append image", func() {})
+			it("should return expected Getters result of newly added image", func() {})
 		})
 		when("Single Image", func() {
 			it("should append given annotations", func() {})
@@ -348,6 +496,7 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 	})
 	when("#Remove", func() {
 		it("should remove specified image", func() {})
+		it("should not perform Set and Get operations", func() {})
 		it("should remove all images when index specified", func() {})
 		it("should return an error when image not found", func() {})
 	})

@@ -475,6 +475,12 @@ func (h *CNBIndex) SetFeatures(digest name.Digest, features []string) error {
 		return err
 	}
 
+	strSet := NewStringSet()
+	for _, feat := range features {
+		strSet.Add(feat)
+	}
+	features = strSet.StringSlice()
+
 	if mfest, err := h.getIndexManifest(digest); err == nil {
 		h.annotate.SetFeatures(hash, features)
 		h.annotate.SetFormat(hash, mfest.MediaType)
@@ -586,6 +592,12 @@ func (h *CNBIndex) SetOSFeatures(digest name.Digest, osFeatures []string) error 
 	if err != nil {
 		return err
 	}
+
+	strSet := NewStringSet()
+	for _, feat := range osFeatures {
+		strSet.Add(feat)
+	}
+	osFeatures = strSet.StringSlice()
 
 	if mfest, err := h.getIndexManifest(digest); err == nil {
 		h.annotate.SetOSFeatures(hash, osFeatures)
@@ -712,20 +724,22 @@ func (h *CNBIndex) SetAnnotations(digest name.Digest, annotations map[string]str
 	}
 
 	for _, desc := range mfest.Manifests {
-		if desc.Digest == hash {
-			annos := mfest.Annotations
-			if len(annos) == 0 {
-				annos = make(map[string]string)
-			}
-
-			for k, v := range annotations {
-				annos[k] = v
-			}
-
-			h.annotate.SetAnnotations(hash, annos)
-			h.annotate.SetFormat(hash, mfest.MediaType)
-			return nil
+		if desc.Digest != hash {
+			continue
 		}
+
+		annos := mfest.Annotations
+		if len(annos) == 0 {
+			annos = make(map[string]string)
+		}
+
+		for k, v := range annotations {
+			annos[k] = v
+		}
+
+		h.annotate.SetAnnotations(hash, annos)
+		h.annotate.SetFormat(hash, desc.MediaType)
+		return nil
 	}
 
 	if desc, ok := h.images[hash]; ok {
@@ -782,6 +796,12 @@ func (h *CNBIndex) SetURLs(digest name.Digest, urls []string) error {
 	if err != nil {
 		return err
 	}
+
+	strSet := NewStringSet()
+	for _, url := range urls {
+		strSet.Add(url)
+	}
+	urls = strSet.StringSlice()
 
 	if mfest, err := h.getIndexManifest(digest); err == nil {
 		h.annotate.SetURLs(hash, urls)

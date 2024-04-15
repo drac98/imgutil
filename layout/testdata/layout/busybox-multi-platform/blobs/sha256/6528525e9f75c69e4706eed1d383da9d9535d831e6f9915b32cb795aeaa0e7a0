@@ -68,27 +68,6 @@
         "features": ["feature-3", "feature-4"]
       },
       "size": 610
-    },
-    {
-      "annotations": {
-        "com.docker.official-images.bashbrew.arch": "arm32v7",
-        "org.opencontainers.image.base.name": "scratch",
-        "org.opencontainers.image.created": "2024-02-28T00:44:18Z",
-        "org.opencontainers.image.revision": "185a3f7f21c307b15ef99b7088b228f004ff5f11",
-        "org.opencontainers.image.source": "https://github.com/docker-library/busybox.git",
-        "org.opencontainers.image.url": "https://hub.docker.com/_/busybox",
-        "org.opencontainers.image.version": "1.36.1-glibc"
-      },
-      "urls": ["https://bar.foo"],
-      "digest": "sha256:190132d348f8a81e2f67b6beb447a94d50adecfeb9afea638951faacee4ef987",
-      "mediaType": "application/vnd.oci.image.index.v1+json",
-      "size": 610
-    },
-    {
-      "urls": ["https://bar.foo"],
-      "digest": "sha256:6528525e9f75c69e4706eed1d383da9d9535d831e6f9915b32cb795aeaa0e7a0",
-      "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
-      "size": 610
     }
   ],
   "mediaType": "application/vnd.oci.image.index.v1+json",
