@@ -1434,20 +1434,27 @@ func (h *CNBIndex) Remove(repoName string) (err error) {
 	}
 
 	found := false
-	indexManifests := make([]v1.Hash, 0)
 	for _, d := range mfest.Manifests {
 		if d.Digest == hash {
 			found = true
 			break
 		}
-		indexManifests = append(indexManifests, d.Digest)
 	}
 
 	if !found {
-		if len(indexManifests) == 0 {
+		imgIdx, err := remote.Index(ref.Context().Digest(hash.String()))
+		if err != nil {
 			return cnbErrs.NewDigestNotFoundError(ref.Identifier())
 		}
-		h.removedManifests = append(h.removedManifests, indexManifests...)
+
+		mfest, err := imgIdx.IndexManifest()
+		if err != nil {
+			return err
+		}
+
+		for _, desc := range mfest.Manifests {
+			h.removedManifests = append(h.removedManifests, desc.Digest)
+		}
 	}
 
 	h.removedManifests = append(h.removedManifests, hash)
