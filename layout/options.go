@@ -68,11 +68,6 @@ func WithKeychain(keychain authn.Keychain) Option {
 	return imgutil.WithKeychain(keychain)
 }
 
-// WithXDGRuntimePath Saves the Index to the '`xdgPath`/manifests'
-func WithXDGRuntimePath(xdgPath string) Option {
-	return imgutil.WithXDGRuntimePath(xdgPath)
-}
-
 // PullInsecure If true, pulls images from insecure registry
 func PullInsecure() Option {
 	return imgutil.PullInsecure()

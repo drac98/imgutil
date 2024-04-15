@@ -45,14 +45,6 @@ func testIndexOptions(t *testing.T, when spec.G, it spec.S) {
 				h.AssertNotNil(t, indexOptions.KeyChain)
 			})
 		})
-		when("#WithXDGRuntimePath", func() {
-			it("should create index from xdgPath", func() {
-				var xdgPath = "xdg"
-				op := layout.WithXDGRuntimePath(xdgPath)
-				h.AssertNil(t, op(indexOptions))
-				h.AssertEq(t, indexOptions.XdgPath, xdgPath)
-			})
-		})
 		when("#PullInsecure", func() {
 			it("should push to insecure index", func() {
 				op := layout.PullInsecure()

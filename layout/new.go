@@ -117,12 +117,9 @@ func NewIndex(repoName, path string, ops ...Option) (idx *ImageIndex, err error)
 	var cnbIndex *imgutil.CNBIndex
 	idxOps.XdgPath = path
 	cnbIndex, err = imgutil.NewCNBIndex(repoName, idxOps.BaseIndex, *idxOps)
-	if err != nil {
-		return idx, err
-	}
 	return &ImageIndex{
 		CNBIndex: cnbIndex,
-	}, nil
+	}, err
 }
 
 func processPlatformOption(requestedPlatform imgutil.Platform) imgutil.Platform {

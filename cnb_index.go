@@ -1346,37 +1346,20 @@ func (h *CNBIndex) Push(ops ...func(*IndexPushOptions) error) error {
 	}
 
 	if pushOps.Format != types.MediaType("") {
-		mfest, err := getIndexManifest(h.ImageIndex)
-		if err != nil {
+		h.ImageIndex = mutate.IndexMediaType(h.ImageIndex, pushOps.Format)
+		if err := h.Save(); err != nil {
 			return err
 		}
-
-		if !pushOps.Format.IsIndex() {
-			return cnbErrs.NewUnknownMediaTypeError(pushOps.Format)
-		}
-
-		if pushOps.Format != mfest.MediaType {
-			h.ImageIndex = mutate.IndexMediaType(h.ImageIndex, pushOps.Format)
-			if err := h.Save(); err != nil {
-				return err
-			}
-		}
 	}
 
-	layoutPath := filepath.Join(h.XdgPath, MakeFileSafeName(h.RepoName))
-	path, err := layout.FromPath(layoutPath)
-	if err != nil {
-		return err
-	}
-
-	if h.ImageIndex, err = path.ImageIndex(); err != nil {
-		return err
+	refOps := []name.Option{name.WeakValidation}
+	if pushOps.Insecure {
+		refOps = append(refOps, name.Insecure)
 	}
 
 	ref, err := name.ParseReference(
 		h.RepoName,
-		name.WeakValidation,
-		name.Insecure,
+		refOps...,
 	)
 	if err != nil {
 		return err

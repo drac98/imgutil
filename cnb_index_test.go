@@ -1,16 +1,24 @@
 package imgutil_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+
+	// "strings"
 	"testing"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/types"
+
+	// v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/layout"
+	"github.com/buildpacks/imgutil/remote"
 	h "github.com/buildpacks/imgutil/testhelpers"
 
 	cnbErrs "github.com/buildpacks/imgutil/errors"
@@ -85,7 +93,7 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 		index, err := layout.NewIndex(repoName, tmpDir, imgutil.FromBaseImageIndex(baseIndexPath))
 		h.AssertNil(t, err)
 
-		idx, err = imgutil.NewCNBIndex(repoName, index.ImageIndex, imgutil.IndexOptions{BaseImageIndexRepoName: baseIndexPath})
+		idx, err = imgutil.NewCNBIndex(repoName, index.ImageIndex, imgutil.IndexOptions{BaseImageIndexRepoName: baseIndexPath, XdgPath: tmpDir})
 		h.AssertNil(t, err)
 
 		// localPath = filepath.Join(tmpDir, repoName)
@@ -485,10 +493,101 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 		it("should save changes in expected manner", func() {})
 	})
 	when("#Push", func() {
-		it("should return an error when annotated changes not saved", func() {})
-		it("should return an error when Invalid Push Format provided", func() {})
-		it("should push with current format when Format not specified", func() {})
-		it("should pruge index afer push when requested", func() {})
+		var (
+			idx           imgutil.ImageIndex
+			img1RepoName  string
+			img2RepoName  string
+			indexRepoName = "push-index-test"
+			repoName      string
+		)
+		it.Before(func() {
+			repoName = newTestImageIndexName(indexRepoName)
+			idx = setUpImageIndex(t, repoName, tmpDir, imgutil.WithKeychain(authn.DefaultKeychain))
+
+			// TODO Note in the Push operation
+			// Note: It will only push IndexManifest, assuming all the images it refers exists in registry
+			// We need to push each individual image first]
+
+			img1RepoName = fmt.Sprintf("%s:%s", repoName, "busybox-amd64")
+			img1, err := remote.NewImage(img1RepoName, authn.DefaultKeychain, remote.FromBaseImage("busybox@sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0"))
+			h.AssertNil(t, err)
+			err = img1.Save()
+			h.AssertNil(t, err)
+
+			err = idx.Add(img1RepoName)
+			h.AssertNil(t, err)
+
+			img2RepoName = fmt.Sprintf("%s:%s", repoName, "busybox-arm64")
+			img2, err := remote.NewImage(img2RepoName, authn.DefaultKeychain, remote.FromBaseImage("busybox@sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc"))
+			h.AssertNil(t, err)
+			err = img2.Save()
+			h.AssertNil(t, err)
+
+			err = idx.Add(img2RepoName)
+			h.AssertNil(t, err)
+		})
+		it("should return an error when annotated changes not saved", func() {
+			index, err := layout.NewIndex(repoName, tmpDir, imgutil.FromBaseImageIndex(baseIndexPath))
+			h.AssertNil(t, err)
+
+			idx, err := imgutil.NewCNBIndex(repoName, index.ImageIndex, imgutil.IndexOptions{BaseImageIndexRepoName: baseIndexPath, XdgPath: tmpDir})
+			h.AssertNil(t, err)
+
+			err = idx.SetOS(FoundDigest, OS)
+			h.AssertNil(t, err)
+
+			err = idx.Push(imgutil.UsingFormat(types.DockerConfigJSON))
+			h.AssertNotNil(t, err)
+
+			_, err = remote.NewIndex(repoName, imgutil.WithKeychain(authn.DefaultKeychain))
+			h.AssertNotNil(t, err)
+
+			_, err = os.Stat(filepath.Join(tmpDir, imgutil.MakeFileSafeName(repoName)))
+			h.AssertNil(t, err)
+		})
+		it("should return an error when Invalid Push Format provided", func() {
+			err = idx.Push(imgutil.UsingFormat(types.DockerConfigJSON))
+			h.AssertNotNil(t, err)
+
+			_, err := remote.NewIndex(repoName, imgutil.WithKeychain(authn.DefaultKeychain))
+			h.AssertNotNil(t, err)
+		})
+		it("should push with current format when Format not specified", func() {
+			err = idx.Push()
+			h.AssertNil(t, err)
+
+			idx, err := remote.NewIndex(repoName, imgutil.WithKeychain(authn.DefaultKeychain))
+			h.AssertNil(t, err)
+			h.AssertNotNil(t, idx)
+
+			format, err := idx.CNBIndex.MediaType()
+			h.AssertNil(t, err)
+			h.AssertEq(t, format, types.OCIImageIndex)
+		})
+		it("should push with specified mediaType when Format is specified", func() {
+			err = idx.Push(imgutil.UsingFormat(types.DockerManifestList))
+			h.AssertNil(t, err)
+
+			idx, err := remote.NewIndex(repoName, imgutil.WithKeychain(authn.DefaultKeychain))
+			h.AssertNil(t, err)
+			h.AssertNotNil(t, idx)
+
+			format, err := idx.CNBIndex.MediaType()
+			h.AssertNil(t, err)
+			h.AssertEq(t, format, types.DockerManifestList)
+		})
+		it("should pruge index afer push when requested", func() {
+			index, err := layout.NewIndex(repoName, tmpDir, imgutil.FromBaseImageIndex(baseIndexPath))
+			h.AssertNil(t, err)
+
+			idx, err := imgutil.NewCNBIndex(repoName, index.ImageIndex, imgutil.IndexOptions{BaseImageIndexRepoName: baseIndexPath, XdgPath: tmpDir})
+			h.AssertNil(t, err)
+
+			h.AssertNil(t, idx.Push(imgutil.WithPurge(true)))
+
+			_, err = os.Stat(filepath.Join(tmpDir, imgutil.MakeFileSafeName(repoName)))
+			h.AssertNotNil(t, err)
+		})
 	})
 	when("#Inspect", func() {
 		it("should return an error when annotated changes not saved", func() {})
@@ -505,3 +604,28 @@ func testCnbIndex(t *testing.T, when spec.G, it spec.S) {
 		it("should return an error when index not exists", func() {})
 	})
 }
+
+func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...layout.Option) imgutil.ImageIndex {
+	idx, err := layout.NewIndex(repoName, tmpDir, ops...)
+	h.AssertNil(t, err)
+
+	// TODO before adding something to the index, apparently we need initialize on disk
+	err = idx.Save()
+	h.AssertNil(t, err)
+	return idx
+}
+
+// func newRepoName() string {
+// 	return "test-layout-index-" + h.RandString(10)
+// }
+
+func newTestImageIndexName(name string) string {
+	return dockerRegistry.RepoName(name + "-" + h.RandString(10))
+}
+
+// func parseImageIndex(t *testing.T, index string) *v1.IndexManifest {
+// 	r := strings.NewReader(index)
+// 	idx, err := v1.ParseIndexManifest(r)
+// 	h.AssertNil(t, err)
+// 	return idx
+// }
