@@ -707,7 +707,7 @@ func (h *CNBIndex) indexAnnotations(digest name.Digest) (annotations map[string]
 	return mfest.Annotations, types.OCIImageIndex, nil
 }
 
-// SetAnnotations annotates the `Annotations` of an Image with given Digest by appending to existsing Annotations if any.
+// SetAnnotations annotates the `Annotations` of an Image with given Digest by appending to existing Annotations if any.
 //
 // Returns an error if no Image/Index found with given Digest.
 //

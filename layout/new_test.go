@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -22,10 +21,7 @@ func TestLayoutNewImageIndex(t *testing.T) {
 
 func testLayoutNewImageIndex(t *testing.T, when spec.G, it spec.S) {
 	var (
-		idx              imgutil.ImageIndex
-		linuxAmd64Digest name.Digest
-		linuxArm64Digest name.Digest
-
+		idx      imgutil.ImageIndex
 		tempDir  string
 		repoName string
 		err      error
@@ -38,12 +34,6 @@ func testLayoutNewImageIndex(t *testing.T, when spec.G, it spec.S) {
 
 		// global directory and paths
 		testDataDir = filepath.Join("testdata", "layout")
-
-		linuxAmd64Digest, err = name.NewDigest("busybox-multi-platform@sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
-		h.AssertNil(t, err)
-
-		linuxArm64Digest, err = name.NewDigest("busybox-multi-platform@sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
-		h.AssertNil(t, err)
 	})
 
 	it.After(func() {
