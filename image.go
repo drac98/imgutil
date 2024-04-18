@@ -3,7 +3,6 @@ package imgutil
 import (
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -41,9 +40,9 @@ type Image interface {
 }
 
 type WithEditableManifest interface {
+	WithEditableAnnotations
 	// getters
 
-	Annotations() (map[string]string, error)
 	Digest() (v1.Hash, error)
 	GetAnnotateRefName() (string, error)
 	ManifestSize() (int64, error)
@@ -52,39 +51,56 @@ type WithEditableManifest interface {
 	// setters
 
 	AnnotateRefName(refName string) error
-	SetAnnotations(map[string]string) error
 }
 
 type WithEditableConfig interface {
+	WithEditableConfigFilePlatform
 	// getters
 
-	Architecture() (string, error)
 	CreatedAt() (time.Time, error)
 	Entrypoint() ([]string, error)
 	Env(key string) (string, error)
 	History() ([]v1.History, error)
 	Label(string) (string, error)
 	Labels() (map[string]string, error)
-	OS() (string, error)
-	OSFeatures() ([]string, error)
-	OSVersion() (string, error)
 	RemoveLabel(string) error
-	Variant() (string, error)
 	WorkingDir() (string, error)
 
 	// setters
 
-	SetArchitecture(string) error
 	SetCmd(...string) error
 	SetEntrypoint(...string) error
 	SetEnv(string, string) error
 	SetHistory([]v1.History) error
 	SetLabel(string, string) error
-	SetOS(string) error
-	SetOSFeatures([]string) error
-	SetOSVersion(string) error
-	SetVariant(string) error
 	SetWorkingDir(string) error
+}
+
+type WithEditableAnnotations interface {
+	Annotations() (map[string]string, error)
+	SetAnnotations(map[string]string) error
+}
+
+type WithEditableConfigFilePlatform interface {
+	// Getters
+	OS() (string, error)
+	Architecture() (string, error)
+	Variant() (string, error)
+	OSVersion() (string, error)
+	OSFeatures() ([]string, error)
+
+	// Setters
+
+	SetOS(string) error
+	SetArchitecture(string) error
+	SetVariant(string) error
+	SetOSVersion(string) error
+	SetOSFeatures([]string) error
+}
+
+type WithEditableFeatures interface {
+	Features() ([]string, error)
+	SetFeatures() ([]string, error)
 }
 
 type WithEditableLayers interface {
@@ -115,27 +131,8 @@ type Platform struct {
 	OSVersion    string
 }
 
-type SaveDiagnostic struct {
-	ImageName string
-	Cause     error
-}
-
-type SaveError struct {
-	Errors []SaveDiagnostic
-}
-
-func (e SaveError) Error() string {
-	var errors []string
-	for _, d := range e.Errors {
-		errors = append(errors, fmt.Sprintf("[%s: %s]", d.ImageName, d.Cause.Error()))
-	}
-	return fmt.Sprintf("failed to write image to the following tags: %s", strings.Join(errors, ","))
-}
-
-type ErrLayerNotFound struct {
-	DiffID string
-}
-
-func (e ErrLayerNotFound) Error() string {
-	return fmt.Sprintf("failed to find layer with diff ID %q", e.DiffID)
+// hack to add v1.Manifest.Config when mutating image
+type V1Image struct {
+	v1.Image
+	config v1.Descriptor
 }

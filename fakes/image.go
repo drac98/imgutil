@@ -16,6 +16,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/pkg/errors"
 
+	cnbErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -331,18 +333,18 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 		i.savedAnnotations["org.opencontainers.image.ref.name"] = i.refName
 	}
 
-	var errs []imgutil.SaveDiagnostic
+	var errs []cnbErrs.SaveDiagnostic
 	for _, n := range allNames {
 		_, err := registryName.ParseReference(n, registryName.WeakValidation)
 		if err != nil {
-			errs = append(errs, imgutil.SaveDiagnostic{ImageName: n, Cause: err})
+			errs = append(errs, cnbErrs.SaveDiagnostic{ImageName: n, Cause: err})
 		} else {
 			i.savedNames[n] = true
 		}
 	}
 
 	if len(errs) > 0 {
-		return imgutil.SaveError{Errors: errs}
+		return cnbErrs.SaveError{Errors: errs}
 	}
 
 	return nil

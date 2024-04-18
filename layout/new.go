@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/buildpacks/imgutil"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
 
 func NewImage(path string, ops ...imgutil.ImageOption) (*Image, error) {
@@ -91,7 +92,7 @@ func NewIndex(repoName, path string, ops ...imgutil.IndexOption) (idx *ImageInde
 			}
 
 			if mfest == nil {
-				return idx, errors.New("encountered unexpected error while parsing image: manifest or index manifest is nil")
+				return idx, cnbErrs.ErrManifestUndefined
 			}
 		}
 	}
@@ -116,12 +117,9 @@ func NewIndex(repoName, path string, ops ...imgutil.IndexOption) (idx *ImageInde
 	var cnbIndex *imgutil.CNBIndex
 	idxOps.XdgPath = path
 	cnbIndex, err = imgutil.NewCNBIndex(repoName, idxOps.BaseIndex, *idxOps)
-	if err != nil {
-		return idx, err
-	}
 	return &ImageIndex{
 		CNBIndex: cnbIndex,
-	}, nil
+	}, err
 }
 
 func processPlatformOption(requestedPlatform imgutil.Platform) imgutil.Platform {
@@ -200,18 +198,11 @@ func imageFromIndex(index v1.ImageIndex, platform imgutil.Platform) (v1.Image, e
 	return index.Image(manifest.Digest)
 }
 
-// TODO move this code to something more generic
-func validateRepoName(repoName string, o *imgutil.IndexOptions) error {
+func validateRepoName(repoName string, o *imgutil.IndexOptions) (err error) {
 	if o.Insecure {
-		_, err := name.ParseReference(repoName, name.Insecure, name.WeakValidation)
-		if err != nil {
-			return err
-		}
+		_, err = name.ParseReference(repoName, name.Insecure, name.WeakValidation)
 	} else {
-		_, err := name.ParseReference(repoName, name.WeakValidation)
-		if err != nil {
-			return err
-		}
+		_, err = name.ParseReference(repoName, name.WeakValidation)
 	}
-	return nil
+	return err
 }

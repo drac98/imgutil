@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -17,19 +18,18 @@ func TestUtils(t *testing.T) {
 	spec.Run(t, "Utils", testUtils, spec.Parallel(), spec.Report(report.Terminal{}))
 }
 
-type FakeIndentifier struct {
-	hash string
-}
-
-func NewFakeIdentifier(hash string) FakeIndentifier {
-	return FakeIndentifier{
-		hash: hash,
-	}
-}
-
-func (f FakeIndentifier) String() string {
-	return f.hash
-}
+var (
+	emptyImage  = empty.Image
+	OS          = "some-os"
+	arch        = "some-arch"
+	variant     = "some-variant"
+	osVersion   = "some-os-version"
+	features    = []string{"feature1", "feature2"}
+	osFeatures  = []string{"osFeature1", "osFeature2"}
+	urls        = []string{"url1", "url2"}
+	annotations = map[string]string{"key1": "value1", "key2": "value2"}
+	fakeHash    = v1.Hash{Algorithm: "sha256", Hex: "8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"}
+)
 
 func testUtils(t *testing.T, when spec.G, it spec.S) {
 	when("#TaggableIndex", func() {
@@ -168,53 +168,67 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertEq(t, format, types.DockerManifestList)
 		})
 	})
-	when("annotate", func() {
-		annotate := imgutil.Annotate{
-			Instance: map[v1.Hash]v1.Descriptor{},
-		}
-		it.Before(func() {
-			annotate = imgutil.Annotate{
-				Instance: map[v1.Hash]v1.Descriptor{},
-			}
-		})
-		when("#Annotations", func() {
-			it.Before(func() {
-				annotate.SetAnnotations(v1.Hash{}, map[string]string{"some-key": "some-value"})
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetAnnotations(v1.Hash{}, map[string]string(nil))
-				annotations, err := annotate.Annotations(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, annotations, map[string]string(nil))
-			})
-			it("should return expected os", func() {
-				annotations, err := annotate.Annotations(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, annotations, map[string]string{"some-key": "some-value"})
-			})
-		})
-		when("#Format", func() {
-			it.Before(func() {
-				annotate.SetFormat(v1.Hash{}, types.OCIImageIndex)
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-				h.AssertEq(t, desc.MediaType, types.OCIImageIndex)
-			})
-			it("should return an error", func() {
-				annotate.SetFormat(v1.Hash{}, types.MediaType(""))
-				format, err := annotate.Format(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, format, types.MediaType(""))
-			})
-			it("should return expected os", func() {
-				format, err := annotate.Format(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, format, types.OCIImageIndex)
-			})
+	when("#GetConfigFile", func() {
+		it("should return ConfigFile", func() {
+			config, err := imgutil.GetConfigFile(emptyImage)
+			h.AssertNotNil(t, config)
+			h.AssertNil(t, err)
 		})
 	})
+	when("#GetManifest", func() {
+		it("should return Manifest", func() {
+			mfest, err := imgutil.GetManifest(emptyImage)
+			h.AssertNotNil(t, mfest)
+			h.AssertNil(t, err)
+		})
+	})
+	when("#MapContains", func() {
+		var (
+			sampleMap    = map[string]string{"key1": "value1", "key2": "value2"}
+			mapExists    = map[string]string{"key2": "value2"}
+			mapNotExists = map[string]string{"key1": "value2"}
+		)
+		it("should return true", func() {
+			h.AssertEq(t, imgutil.MapContains(sampleMap, mapExists), true)
+		})
+		it("should return false", func() {
+			h.AssertEq(t, imgutil.MapContains(sampleMap, mapNotExists), false)
+		})
+	})
+	when("#SliceContains", func() {
+		var (
+			sampleSlice    = []string{"item1", "item2", "item3"}
+			sliceExists    = []string{"item2", "item1"}
+			sliceNotExists = []string{"item1", "item2", "item3", "item4"}
+		)
+		it("should return true", func() {
+			h.AssertEq(t, imgutil.SliceContains(sampleSlice, sliceExists), true)
+		})
+		it("should return false", func() {
+			h.AssertEq(t, imgutil.SliceContains(sampleSlice, sliceNotExists), false)
+		})
+	})
+	when("#MakeFileSafeName", func() {
+		var (
+			imageNameWithTag         = "cnbs/sample:image"
+			expectedImageNameWithTag = "cnbs_sample-image"
+
+			imageNameWithDigest         = "cnbs/sample@sha256:8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"
+			expectedImageNameWithDigest = "cnbs_sample@sha256-8ecc4820859d4006d17e8f4fd5248a81414c4e3b7ed5c34b623e23b3436fb1b2"
+		)
+		it("should MakeFileNameSafe(Tag)", func() {
+			h.AssertEq(t, imgutil.MakeFileSafeName(imageNameWithTag), expectedImageNameWithTag)
+		})
+		it("should MakeFileNameSafe(Digest)", func() {
+			h.AssertEq(t, imgutil.MakeFileSafeName(imageNameWithDigest), expectedImageNameWithDigest)
+		})
+	})
+	// when("#ValidateRepoName", func() {
+	// 	it("should not return error when insecure", func() {
+	// 		h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: true}}))
+	// 	})
+	// 	it("should not return an error when secure", func() {
+	// 		h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: false}}))
+	// 	})
+	// })
 }

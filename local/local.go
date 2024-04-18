@@ -12,6 +12,8 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
+	cnbErrs "github.com/buildpacks/imgutil/errors"
+
 	"github.com/buildpacks/imgutil"
 )
 
@@ -63,7 +65,7 @@ func (i *Image) GetLayer(diffID string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if !contains(configFile.RootFS.DiffIDs, layerHash) {
-		return nil, imgutil.ErrLayerNotFound{DiffID: layerHash.String()}
+		return nil, cnbErrs.ErrLayerNotFound{DiffID: layerHash.String()}
 	}
 	layer, err := i.LayerByDiffID(layerHash)
 	if err == nil {
@@ -160,9 +162,6 @@ func (i *Image) addLayerToStore(fromPath, withDiffID string) (v1.Layer, error) {
 		return nil, err
 	}
 	layer = newPopulatedLayer(diffID, fromPath, 1)
-	if err != nil {
-		return nil, err
-	}
 	fi, err := os.Stat(fromPath)
 	if err != nil {
 		return nil, err

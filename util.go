@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
@@ -120,7 +121,7 @@ func MapContains(src, target map[string]string) bool {
 
 func SliceContains(src, target []string) bool {
 	for _, value := range target {
-		if ok := slices.Contains[[]string, string](src, value); !ok {
+		if ok := slices.Contains(src, value); !ok {
 			return false
 		}
 	}
@@ -138,4 +139,14 @@ func MakeFileSafeName(ref string) string {
 func NewEmptyDockerIndex() v1.ImageIndex {
 	idx := empty.Index
 	return mutate.IndexMediaType(idx, types.DockerManifestList)
+}
+
+func ValidateRepoName(repoName string, o *IndexOptions) (err error) {
+	if o.Insecure {
+		_, err = name.ParseReference(repoName, name.Insecure, name.WeakValidation)
+	} else {
+		_, err = name.ParseReference(repoName, name.WeakValidation)
+	}
+	o.BaseImageIndexRepoName = repoName
+	return err
 }

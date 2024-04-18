@@ -79,7 +79,7 @@ func NewIndex(repoName string, ops ...imgutil.IndexOption) (idx *ImageIndex, err
 			return idx, err
 		}
 
-		desc, err := remote.Get(
+		idxOps.BaseIndex, err = remote.Index(
 			ref,
 			remote.WithAuthFromKeychain(idxOps.KeyChain),
 			remote.WithTransport(imgutil.GetTransport(idxOps.Insecure)),
@@ -87,21 +87,12 @@ func NewIndex(repoName string, ops ...imgutil.IndexOption) (idx *ImageIndex, err
 		if err != nil {
 			return idx, err
 		}
-
-		idxOps.BaseIndex, err = desc.ImageIndex()
-		if err != nil {
-			return idx, err
-		}
 	}
 
 	cnbIndex, err := imgutil.NewCNBIndex(repoName, idxOps.BaseIndex, *idxOps)
-	if err != nil {
-		return idx, err
-	}
-
 	return &ImageIndex{
 		CNBIndex: cnbIndex,
-	}, nil
+	}, err
 }
 
 func defaultPlatform() imgutil.Platform {

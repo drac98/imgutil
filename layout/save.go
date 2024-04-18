@@ -3,7 +3,7 @@ package layout
 import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 
-	"github.com/buildpacks/imgutil"
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
 
 func (i *Image) Save(additionalNames ...string) error {
@@ -29,7 +29,7 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 
 	var (
 		pathsToSave = append([]string{name}, additionalNames...)
-		diagnostics []imgutil.SaveDiagnostic
+		diagnostics []cnbErrs.SaveDiagnostic
 	)
 	for _, path := range pathsToSave {
 		layoutPath, err := initEmptyIndexAt(path)
@@ -40,11 +40,11 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 			i.Image,
 			ops...,
 		); err != nil {
-			diagnostics = append(diagnostics, imgutil.SaveDiagnostic{ImageName: i.Name(), Cause: err})
+			diagnostics = append(diagnostics, cnbErrs.SaveDiagnostic{ImageName: i.Name(), Cause: err})
 		}
 	}
 	if len(diagnostics) > 0 {
-		return imgutil.SaveError{Errors: diagnostics}
+		return cnbErrs.SaveError{Errors: diagnostics}
 	}
 
 	return nil

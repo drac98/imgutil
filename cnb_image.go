@@ -9,7 +9,10 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
+	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+
+	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
 
 // CNBImageCore wraps a v1.Image and provides most of the methods necessary for the image to satisfy the Image interface.
@@ -33,7 +36,7 @@ var _ v1.Image = &CNBImageCore{}
 
 // TBD Deprecated: Architecture
 func (i *CNBImageCore) Architecture() (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -42,7 +45,7 @@ func (i *CNBImageCore) Architecture() (string, error) {
 
 // TBD Deprecated: CreatedAt
 func (i *CNBImageCore) CreatedAt() (time.Time, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -51,7 +54,7 @@ func (i *CNBImageCore) CreatedAt() (time.Time, error) {
 
 // TBD Deprecated: Entrypoint
 func (i *CNBImageCore) Entrypoint() ([]string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +62,7 @@ func (i *CNBImageCore) Entrypoint() ([]string, error) {
 }
 
 func (i *CNBImageCore) Env(key string) (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +76,7 @@ func (i *CNBImageCore) Env(key string) (string, error) {
 }
 
 func (i *CNBImageCore) GetAnnotateRefName() (string, error) {
-	manifest, err := getManifest(i.Image)
+	manifest, err := GetManifest(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -90,7 +93,7 @@ func (i *CNBImageCore) GetLayer(diffID string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if !contains(configFile.RootFS.DiffIDs, layerHash) {
-		return nil, ErrLayerNotFound{DiffID: layerHash.String()}
+		return nil, cnbErrs.ErrLayerNotFound{DiffID: layerHash.String()}
 	}
 	hash, err := v1.NewHash(diffID)
 	if err != nil {
@@ -114,7 +117,7 @@ func contains(diffIDs []v1.Hash, hash v1.Hash) bool {
 
 // TBD Deprecated: History
 func (i *CNBImageCore) History() ([]v1.History, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +126,7 @@ func (i *CNBImageCore) History() ([]v1.History, error) {
 
 // TBD Deprecated: Label
 func (i *CNBImageCore) Label(key string) (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +135,7 @@ func (i *CNBImageCore) Label(key string) (string, error) {
 
 // TBD Deprecated: Labels
 func (i *CNBImageCore) Labels() (map[string]string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +149,7 @@ func (i *CNBImageCore) ManifestSize() (int64, error) {
 
 // TBD Deprecated: OS
 func (i *CNBImageCore) OS() (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +158,7 @@ func (i *CNBImageCore) OS() (string, error) {
 
 // TBD Deprecated: OSVersion
 func (i *CNBImageCore) OSVersion() (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -163,22 +166,46 @@ func (i *CNBImageCore) OSVersion() (string, error) {
 }
 
 func (i *CNBImageCore) OSFeatures() ([]string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return nil, err
 	}
 	return configFile.OSFeatures, nil
 }
 
+func (i *CNBImageCore) Features() (features []string, err error) {
+	desc, err := partial.Descriptor(i)
+	if err != nil {
+		return features, err
+	}
+
+	if desc == nil || desc.Platform == nil || len(desc.Platform.Features) == 0 {
+		return nil, fmt.Errorf("image features is undefined for %s ImageIndex", i.preferredMediaTypes.ManifestType())
+	}
+	return desc.Platform.Features, nil
+}
+
+func (i *CNBImageCore) URLs() (urls []string, err error) {
+	desc, err := partial.Descriptor(i)
+	if err != nil {
+		return urls, err
+	}
+
+	if desc == nil || len(desc.URLs) == 0 {
+		return nil, fmt.Errorf("image urls is undefined for %s ImageIndex", i.preferredMediaTypes.ManifestType())
+	}
+	return desc.URLs, nil
+}
+
 func (i *CNBImageCore) Annotations() (map[string]string, error) {
-	manifest, err := getManifest(i.Image)
+	mfest, err := GetManifest(i.Image)
 	if err != nil {
 		return nil, err
 	}
-	if manifest.Annotations == nil {
+	if mfest.Annotations == nil {
 		return make(map[string]string), nil
 	}
-	return manifest.Annotations, nil
+	return mfest.Annotations, nil
 }
 
 func (i *CNBImageCore) TopLayer() (string, error) {
@@ -204,7 +231,7 @@ func (i *CNBImageCore) UnderlyingImage() v1.Image {
 
 // TBD Deprecated: Variant
 func (i *CNBImageCore) Variant() (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -213,7 +240,7 @@ func (i *CNBImageCore) Variant() (string, error) {
 
 // TBD Deprecated: WorkingDir
 func (i *CNBImageCore) WorkingDir() (string, error) {
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return "", err
 	}
@@ -227,7 +254,7 @@ func (i *CNBImageCore) AnnotateRefName(refName string) error {
 }
 
 func (i *CNBImageCore) SetAnnotations(annotations map[string]string) error {
-	manifest, err := getManifest(i.Image)
+	manifest, err := GetManifest(i.Image)
 	if err != nil {
 		return err
 	}
@@ -403,7 +430,7 @@ func (i *CNBImageCore) PreviousImageHasLayer(diffID string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to get layer hash: %w", err)
 	}
-	prevConfigFile, err := getConfigFile(i.previousImage)
+	prevConfigFile, err := GetConfigFile(i.previousImage)
 	if err != nil {
 		return false, fmt.Errorf("failed to get previous image config: %w", err)
 	}
@@ -419,7 +446,7 @@ func (i *CNBImageCore) Rebase(baseTopLayerDiffID string, withNewBase Image) erro
 	}
 
 	// ensure new config matches provided image
-	newBaseConfigFile, err := getConfigFile(newBase)
+	newBaseConfigFile, err := GetConfigFile(newBase)
 	if err != nil {
 		return err
 	}
@@ -485,7 +512,7 @@ func getLayerIndex(forDiffID string, fromImage v1.Image) (int, error) {
 	if err != nil {
 		return -1, fmt.Errorf("failed to get layer hash: %w", err)
 	}
-	configFile, err := getConfigFile(fromImage)
+	configFile, err := GetConfigFile(fromImage)
 	if err != nil {
 		return -1, fmt.Errorf("failed to get config file: %w", err)
 	}
@@ -498,7 +525,7 @@ func getLayerIndex(forDiffID string, fromImage v1.Image) (int, error) {
 }
 
 func getHistory(forIndex int, fromImage v1.Image) (v1.History, error) {
-	configFile, err := getConfigFile(fromImage)
+	configFile, err := GetConfigFile(fromImage)
 	if err != nil {
 		return v1.History{}, err
 	}
@@ -546,7 +573,7 @@ func (i *CNBImageCore) ReuseLayerWithHistory(diffID string, history v1.History) 
 
 func (i *CNBImageCore) MutateConfigFile(withFunc func(c *v1.ConfigFile)) error {
 	// FIXME: put MutateConfigFile on the interface when `remote` and `layout` packages also support it.
-	configFile, err := getConfigFile(i.Image)
+	configFile, err := GetConfigFile(i.Image)
 	if err != nil {
 		return err
 	}
@@ -583,24 +610,14 @@ func (i *CNBImageCore) SetCreatedAtAndHistory() error {
 	return err
 }
 
-func getConfigFile(image v1.Image) (*v1.ConfigFile, error) {
-	configFile, err := image.ConfigFile()
-	if err != nil {
-		return nil, err
-	}
-	if configFile == nil {
-		return nil, errors.New("missing config file")
-	}
-	return configFile, nil
+// Manifest returns this image's Manifest object.
+func (img V1Image) Manifest() (*v1.Manifest, error) {
+	mfest, err := img.Image.Manifest()
+	mfest.Config = img.config
+	return mfest, err
 }
 
-func getManifest(image v1.Image) (*v1.Manifest, error) {
-	manifest, err := image.Manifest()
-	if err != nil {
-		return nil, err
-	}
-	if manifest == nil {
-		return nil, errors.New("missing manifest")
-	}
-	return manifest, nil
+// RawManifest returns the serialized bytes of Manifest()
+func (img V1Image) RawManifest() ([]byte, error) {
+	return partial.RawManifest(img)
 }
