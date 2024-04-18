@@ -114,10 +114,6 @@ func (i *Image) OSFeatures() ([]string, error) {
 	return nil, nil
 }
 
-func (i *Image) URLs() ([]string, error) {
-	return nil, nil
-}
-
 func (i *Image) Annotations() (map[string]string, error) {
 	return nil, nil
 }
@@ -203,10 +199,6 @@ func (i *Image) SetFeatures(_ []string) error {
 }
 
 func (i *Image) SetOSFeatures(_ []string) error {
-	return nil
-}
-
-func (i *Image) SetURLs(_ []string) error {
 	return nil
 }
 

@@ -3,7 +3,6 @@ package layout
 import (
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -18,7 +17,6 @@ type Image struct {
 	repoPath          string
 	saveWithoutLayers bool
 	preserveDigest    bool
-	mutex             sync.Mutex
 }
 
 func (i *Image) Kind() string {
@@ -67,6 +65,11 @@ func (i *Image) Identifier() (imgutil.Identifier, error) {
 		return nil, errors.Wrapf(err, "getting identifier for image at path %q", i.repoPath)
 	}
 	return newLayoutIdentifier(i.repoPath, hash)
+}
+
+func (i *Image) Valid() bool {
+	// layout images may be invalid if they are missing layer data
+	return true
 }
 
 func (i *Image) Delete() error {

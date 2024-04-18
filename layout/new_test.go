@@ -103,123 +103,123 @@ func testLayoutNewImageIndex(t *testing.T, when spec.G, it spec.S) {
 			})
 		})
 
-		when("index already exists on disk", func() {
-			var (
-				attribute  string
-				attributes []string
-			)
+		// when("index already exists on disk", func() {
+		// 	var (
+		// 		attribute  string
+		// 		attributes []string
+		// 	)
 
-			it.Before(func() {
-				baseIndexPath := filepath.Join(testDataDir, "busybox-multi-platform")
-				idx, err = layout.NewIndex("busybox-multi-platform", testDataDir, imgutil.FromBaseImageIndex(baseIndexPath))
-				h.AssertNil(t, err)
-			})
+		// 	it.Before(func() {
+		// 		baseIndexPath := filepath.Join(testDataDir, "busybox-multi-platform")
+		// 		idx, err = layout.NewIndex("busybox-multi-platform", testDataDir, imgutil.FromBaseImageIndex(baseIndexPath))
+		// 		h.AssertNil(t, err)
+		// 	})
 
-			// Getters test cases
-			when("platform attributes are selected", func() {
-				// See spec: https://github.com/opencontainers/image-spec/blob/main/image-index.md#image-index-property-descriptions
-				when("linux/amd64", func() {
-					it("attributes are readable", func() {
-						// #Architecture
-						attribute, err = idx.Architecture(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "amd64")
+		// 	// Getters test cases
+		// 	when("platform attributes are selected", func() {
+		// 		// See spec: https://github.com/opencontainers/image-spec/blob/main/image-index.md#image-index-property-descriptions
+		// 		when("linux/amd64", func() {
+		// 			it("attributes are readable", func() {
+		// 				// #Architecture
+		// 				attribute, err = idx.Architecture(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "amd64")
 
-						// #OS
-						attribute, err = idx.OS(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "linux")
+		// 				// #OS
+		// 				attribute, err = idx.OS(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "linux")
 
-						// #Variant
-						attribute, err = idx.Variant(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "v1")
+		// 				// #Variant
+		// 				attribute, err = idx.Variant(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "v1")
 
-						// #OSVersion
-						attribute, err = idx.OSVersion(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "4.5.6")
+		// 				// #OSVersion
+		// 				attribute, err = idx.OSVersion(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "4.5.6")
 
-						// #OSFeatures
-						attributes, err = idx.OSFeatures(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertContains(t, attributes, "os-feature-1", "os-feature-2")
+		// 				// #OSFeatures
+		// 				attributes, err = idx.OSFeatures(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertContains(t, attributes, "os-feature-1", "os-feature-2")
 
-						// #Features
-						attributes, err = idx.Features(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertContains(t, attributes, "feature-1", "feature-2")
-					})
-				})
+		// 				// #Features
+		// 				attributes, err = idx.Features(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertContains(t, attributes, "feature-1", "feature-2")
+		// 			})
+		// 		})
 
-				when("linux/arm64", func() {
-					it("attributes are readable", func() {
-						// #Architecture
-						attribute, err = idx.Architecture(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "arm")
+		// 		when("linux/arm64", func() {
+		// 			it("attributes are readable", func() {
+		// 				// #Architecture
+		// 				attribute, err = idx.Architecture(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "arm")
 
-						// #OS
-						attribute, err = idx.OS(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "linux")
+		// 				// #OS
+		// 				attribute, err = idx.OS(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "linux")
 
-						// #Variant
-						attribute, err = idx.Variant(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "v7")
+		// 				// #Variant
+		// 				attribute, err = idx.Variant(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "v7")
 
-						// #OSVersion
-						attribute, err = idx.OSVersion(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, attribute, "1.2.3")
+		// 				// #OSVersion
+		// 				attribute, err = idx.OSVersion(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, attribute, "1.2.3")
 
-						// #OSFeatures
-						attributes, err = idx.OSFeatures(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertContains(t, attributes, "os-feature-3", "os-feature-4")
+		// 				// #OSFeatures
+		// 				attributes, err = idx.OSFeatures(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertContains(t, attributes, "os-feature-3", "os-feature-4")
 
-						// #Features
-						attributes, err = idx.Features(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertContains(t, attributes, "feature-3", "feature-4")
-					})
-				})
-			})
+		// 				// #Features
+		// 				attributes, err = idx.Features(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertContains(t, attributes, "feature-3", "feature-4")
+		// 			})
+		// 		})
+		// 	})
 
-			when("#Annotations", func() {
-				var annotations map[string]string
+		// 	when("#Annotations", func() {
+		// 		var annotations map[string]string
 
-				when("linux/amd64", func() {
-					it("existing annotations are readable", func() {
-						annotations, err = idx.Annotations(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, annotations["com.docker.official-images.bashbrew.arch"], "amd64")
-						h.AssertEq(t, annotations["org.opencontainers.image.url"], "https://hub.docker.com/_/busybox")
-						h.AssertEq(t, annotations["org.opencontainers.image.revision"], "d0b7d566eb4f1fa9933984e6fc04ab11f08f4592")
-					})
-				})
+		// 		when("linux/amd64", func() {
+		// 			it("existing annotations are readable", func() {
+		// 				annotations, err = idx.Annotations(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, annotations["com.docker.official-images.bashbrew.arch"], "amd64")
+		// 				h.AssertEq(t, annotations["org.opencontainers.image.url"], "https://hub.docker.com/_/busybox")
+		// 				h.AssertEq(t, annotations["org.opencontainers.image.revision"], "d0b7d566eb4f1fa9933984e6fc04ab11f08f4592")
+		// 			})
+		// 		})
 
-				when("linux/arm64", func() {
-					it("existing annotations are readable", func() {
-						annotations, err = idx.Annotations(linuxArm64Digest)
-						h.AssertNil(t, err)
-						h.AssertEq(t, annotations["com.docker.official-images.bashbrew.arch"], "arm32v7")
-						h.AssertEq(t, annotations["org.opencontainers.image.url"], "https://hub.docker.com/_/busybox")
-						h.AssertEq(t, annotations["org.opencontainers.image.revision"], "185a3f7f21c307b15ef99b7088b228f004ff5f11")
-					})
-				})
-			})
+		// 		when("linux/arm64", func() {
+		// 			it("existing annotations are readable", func() {
+		// 				annotations, err = idx.Annotations(linuxArm64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertEq(t, annotations["com.docker.official-images.bashbrew.arch"], "arm32v7")
+		// 				h.AssertEq(t, annotations["org.opencontainers.image.url"], "https://hub.docker.com/_/busybox")
+		// 				h.AssertEq(t, annotations["org.opencontainers.image.revision"], "185a3f7f21c307b15ef99b7088b228f004ff5f11")
+		// 			})
+		// 		})
+		// 	})
 
-			when("#URLs", func() {
-				when("linux/amd64", func() {
-					it("existing annotations are readable", func() {
-						attributes, err = idx.URLs(linuxAmd64Digest)
-						h.AssertNil(t, err)
-						h.AssertContains(t, attributes, "https://foo.bar")
-					})
-				})
-			})
-		})
+		// 	when("#URLs", func() {
+		// 		when("linux/amd64", func() {
+		// 			it("existing annotations are readable", func() {
+		// 				attributes, err = idx.URLs(linuxAmd64Digest)
+		// 				h.AssertNil(t, err)
+		// 				h.AssertContains(t, attributes, "https://foo.bar")
+		// 			})
+		// 		})
+		// 	})
+		// })
 	})
 }

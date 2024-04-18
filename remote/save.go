@@ -38,25 +38,6 @@ func (i *Image) SaveAs(name string, additionalNames ...string) error {
 		}
 	}
 
-	i.Image, err = imgutil.MutateManifest(i.Image, func(mfest *v1.Manifest) {
-		i.mutex.TryLock()
-		defer i.mutex.Unlock()
-
-		os, _ := i.OS()
-		arch, _ := i.Architecture()
-		variant, _ := i.Variant()
-		osv, _ := i.OSVersion()
-		features, _ := i.Features()
-		osFeatures, _ := i.OSFeatures()
-		urls, _ := i.URLs()
-		annotations, _ := i.Annotations()
-
-		imgutil.MutateManifestFn(mfest, os, arch, variant, osv, features, osFeatures, urls, annotations)
-	})
-	if err != nil {
-		return err
-	}
-
 	// save
 	var diagnostics []cnbErrs.SaveDiagnostic
 	allNames := append([]string{name}, additionalNames...)

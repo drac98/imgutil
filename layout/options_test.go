@@ -69,7 +69,7 @@ func testIndexOptions(t *testing.T, when spec.G, it spec.S) {
 			it("should add image with OS", func() {
 				op := layout.WithOS(OS)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.OS, OS)
+				h.AssertEq(t, indexAddOptions.Platform.OS, OS)
 			})
 		})
 		when("#WithLocalImage", func() {
@@ -88,21 +88,21 @@ func testIndexOptions(t *testing.T, when spec.G, it spec.S) {
 			it("should add image with Architecture", func() {
 				op := layout.WithArchitecture(arch)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.Arch, arch)
+				h.AssertEq(t, indexAddOptions.Platform.Architecture, arch)
 			})
 		})
 		when("#WithVariant", func() {
 			it("should add image with Variant", func() {
 				op := layout.WithVariant(variant)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.Variant, variant)
+				h.AssertEq(t, indexAddOptions.Platform.Variant, variant)
 			})
 		})
 		when("#WithOSVersion", func() {
 			it("should add image with OSVersion", func() {
 				op := layout.WithOSVersion(osVersion)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, indexAddOptions.OSVersion, osVersion)
+				h.AssertEq(t, indexAddOptions.Platform.OSVersion, osVersion)
 			})
 		})
 		when("#WithFeatures", func() {
@@ -116,7 +116,7 @@ func testIndexOptions(t *testing.T, when spec.G, it spec.S) {
 			it("should add image with OSFeatures", func() {
 				op := layout.WithOSFeatures(osFeatures)
 				h.AssertNil(t, op(indexAddOptions))
-				h.AssertEq(t, imgutil.SliceContains(indexAddOptions.OSFeatures, osFeatures), true)
+				h.AssertEq(t, imgutil.SliceContains(indexAddOptions.Platform.OSFeatures, osFeatures), true)
 			})
 		})
 		when("#WithAnnotations", func() {

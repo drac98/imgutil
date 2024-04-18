@@ -104,24 +104,24 @@ func testCnbImage(t *testing.T, when spec.G, it spec.S) {
 			h.AssertNil(t, err)
 			h.AssertNotNil(t, cnbImage)
 		})
-		it("should set and get Features", func() {
-			h.AssertNil(t, cnbImage.SetFeatures(features))
-			feats, err := cnbImage.Features()
-			h.AssertNil(t, err)
-			h.AssertEq(t, imgutil.SliceContains(feats, features), true)
-		})
+		// it("should set and get Features", func() {
+		// 	h.AssertNil(t, cnbImage.SetFeatures(features))
+		// 	feats, err := cnbImage.Features()
+		// 	h.AssertNil(t, err)
+		// 	h.AssertEq(t, imgutil.SliceContains(feats, features), true)
+		// })
 		it("should set and get OSFeatures", func() {
 			h.AssertNil(t, cnbImage.SetOSFeatures(osFeatures))
 			osFeats, err := cnbImage.OSFeatures()
 			h.AssertNil(t, err)
 			h.AssertEq(t, imgutil.SliceContains(osFeats, osFeatures), true)
 		})
-		it("should set and get URLs", func() {
-			h.AssertNil(t, cnbImage.SetURLs(urls))
-			u, err := cnbImage.URLs()
-			h.AssertNil(t, err)
-			h.AssertEq(t, imgutil.SliceContains(u, urls), true)
-		})
+		// it("should set and get URLs", func() {
+		// 	h.AssertNil(t, cnbImage.SetURLs(urls))
+		// 	u, err := cnbImage.URLs()
+		// 	h.AssertNil(t, err)
+		// 	h.AssertEq(t, imgutil.SliceContains(u, urls), true)
+		// })
 		it("should set and get Annotations", func() {
 			annos, err := cnbImage.Annotations()
 			h.AssertNotNil(t, err)

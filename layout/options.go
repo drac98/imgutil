@@ -91,7 +91,7 @@ func WithOS(os string) AddOption {
 }
 
 // Add a Local image to Index
-func WithLocalImage(image imgutil.EditableImage) AddOption {
+func WithLocalImage(image imgutil.Image) AddOption {
 	return imgutil.WithLocalImage(image)
 }
 

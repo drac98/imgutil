@@ -9,17 +9,85 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
 
-type EditableImage interface {
-	// Getters
+type Image interface {
+	WithEditableManifest
+	WithEditableConfig
+	WithEditableLayers
 
+	// getters
+
+	// Found reports if image exists in the image store with `Name()`.
+	Found() bool
+	Identifier() (Identifier, error)
+	// Kind exposes the type of image that backs the imgutil.Image implementation.
+	// It could be `local`, `remote`, or `layout`.
+	Kind() string
+	Name() string
+	UnderlyingImage() v1.Image
+	// Valid returns true if the image is well-formed (e.g. all manifest layers exist on the registry).
+	Valid() bool
+
+	// setters
+
+	Delete() error
+	Rename(name string)
+	// Save saves the image as `Name()` and any additional names provided to this method.
+	Save(additionalNames ...string) error
+	// SaveAs ignores the image `Name()` method and saves the image according to name & additional names provided to this method
+	SaveAs(name string, additionalNames ...string) error
+	// SaveFile saves the image as a docker archive and provides the filesystem location
+	SaveFile() (string, error)
+}
+
+type WithEditableManifest interface {
+	WithEditableAnnotations
+	// getters
+
+	Digest() (v1.Hash, error)
+	GetAnnotateRefName() (string, error)
+	ManifestSize() (int64, error)
+	MediaType() (types.MediaType, error)
+
+	// setters
+
+	AnnotateRefName(refName string) error
+}
+
+type WithEditableConfig interface {
+	WithEditableConfigFilePlatform
+	// getters
+
+	CreatedAt() (time.Time, error)
+	Entrypoint() ([]string, error)
+	Env(key string) (string, error)
+	History() ([]v1.History, error)
+	Label(string) (string, error)
+	Labels() (map[string]string, error)
+	RemoveLabel(string) error
+	WorkingDir() (string, error)
+
+	// setters
+
+	SetCmd(...string) error
+	SetEntrypoint(...string) error
+	SetEnv(string, string) error
+	SetHistory([]v1.History) error
+	SetLabel(string, string) error
+	SetWorkingDir(string) error
+}
+
+type WithEditableAnnotations interface {
+	Annotations() (map[string]string, error)
+	SetAnnotations(map[string]string) error
+}
+
+type WithEditableConfigFilePlatform interface {
+	// Getters
 	OS() (string, error)
 	Architecture() (string, error)
 	Variant() (string, error)
 	OSVersion() (string, error)
-	Features() ([]string, error)
 	OSFeatures() ([]string, error)
-	URLs() ([]string, error)
-	Annotations() (map[string]string, error)
 
 	// Setters
 
@@ -27,75 +95,31 @@ type EditableImage interface {
 	SetArchitecture(string) error
 	SetVariant(string) error
 	SetOSVersion(string) error
-	SetFeatures([]string) error
 	SetOSFeatures([]string) error
-	SetURLs([]string) error
-	SetAnnotations(map[string]string) error
-
-	// misc
-
-	MediaType() (types.MediaType, error)
-	Digest() (v1.Hash, error)
-	// ManifestSize returns the size of the manifest. If a manifest doesn't exist, it returns 0.
-	ManifestSize() (int64, error)
 }
 
-type Image interface {
-	EditableImage
+type WithEditableFeatures interface {
+	Features() ([]string, error)
+	SetFeatures() ([]string, error)
+}
+
+type WithEditableLayers interface {
 	// getters
 
-	CreatedAt() (time.Time, error)
-	Entrypoint() ([]string, error)
-	Env(key string) (string, error)
-	// Found reports if image exists in the image store with `Name()`.
-	Found() bool
-	GetAnnotateRefName() (string, error)
 	// GetLayer retrieves layer by diff id. Returns a reader of the uncompressed contents of the layer.
 	GetLayer(diffID string) (io.ReadCloser, error)
-	History() ([]v1.History, error)
-	Identifier() (Identifier, error)
-	// Kind exposes the type of image that backs the imgutil.Image implementation.
-	// It could be `local`, `remote`, or `layout`.
-	Kind() string
-	Label(string) (string, error)
-	Labels() (map[string]string, error)
-	Name() string
 	// TopLayer returns the diff id for the top layer
 	TopLayer() (string, error)
-	UnderlyingImage() v1.Image
-	// Valid returns true if the image is well-formed (e.g. all manifest layers exist on the registry).
-	Valid() bool
-	WorkingDir() (string, error)
 
 	// setters
-
-	// AnnotateRefName set a value for the `org.opencontainers.image.ref.name` annotation
-	AnnotateRefName(refName string) error
-	Rename(name string)
-	SetCmd(...string) error
-	SetEntrypoint(...string) error
-	SetEnv(string, string) error
-	SetHistory([]v1.History) error
-	SetLabel(string, string) error
-	SetWorkingDir(string) error
-
-	// modifiers
 
 	AddLayer(path string) error
 	AddLayerWithDiffID(path, diffID string) error
 	AddLayerWithDiffIDAndHistory(path, diffID string, history v1.History) error
 	AddOrReuseLayerWithHistory(path, diffID string, history v1.History) error
-	Delete() error
 	Rebase(string, Image) error
-	RemoveLabel(string) error
 	ReuseLayer(diffID string) error
 	ReuseLayerWithHistory(diffID string, history v1.History) error
-	// Save saves the image as `Name()` and any additional names provided to this method.
-	Save(additionalNames ...string) error
-	// SaveAs ignores the image `Name()` method and saves the image according to name & additional names provided to this method
-	SaveAs(name string, additionalNames ...string) error
-	// SaveFile saves the image as a docker archive and provides the filesystem location
-	SaveFile() (string, error)
 }
 
 type Identifier fmt.Stringer

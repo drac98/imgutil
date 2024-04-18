@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -25,7 +24,6 @@ type Image struct {
 	store          *Store
 	lastIdentifier string
 	daemonOS       string
-	mutex          sync.Mutex
 }
 
 func (i *Image) Kind() string {
@@ -48,6 +46,11 @@ func (i *Image) Identifier() (imgutil.Identifier, error) {
 	return IDIdentifier{
 		ImageID: strings.TrimPrefix(i.lastIdentifier, "sha256:"),
 	}, nil
+}
+
+func (i *Image) Valid() bool {
+	// local images are actually always invalid, because they are missing a manifest, but let's ignore that for now
+	return true
 }
 
 // GetLayer returns an io.ReadCloser with uncompressed layer data.
@@ -209,10 +212,4 @@ func (i *Image) SaveFile() (string, error) {
 
 func (i *Image) Delete() error {
 	return i.store.Delete(i.lastIdentifier)
-}
-
-var _ imgutil.ImageIndex = (*ImageIndex)(nil)
-
-type ImageIndex struct {
-	*imgutil.CNBIndex
 }

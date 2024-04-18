@@ -1089,39 +1089,25 @@ func testImage(t *testing.T, when spec.G, it spec.S) {
 				arch       = "amd64"
 				variant    = "some-variant"
 				osVersion  = "1234"
-				features   = []string{"some-features"}
 				osFeatures = []string{"some-osFeatures"}
-				urls       = []string{"some-urls"}
 				annos      = map[string]string{"some-key": "some-value"}
 			)
-			image.SetOS(os)
-			image.SetArchitecture(arch)
-			image.SetVariant(variant)
-			image.SetOSVersion(osVersion)
-			image.SetFeatures(features)
-			image.SetOSFeatures(osFeatures)
-			image.SetURLs(urls)
-			image.SetAnnotations(annos)
+			h.AssertNil(t, image.SetOS(os))
+			h.AssertNil(t, image.SetArchitecture(arch))
+			h.AssertNil(t, image.SetVariant(variant))
+			h.AssertNil(t, image.SetOSVersion(osVersion))
+			h.AssertNil(t, image.SetOSFeatures(osFeatures))
+			h.AssertNil(t, image.SetAnnotations(annos))
 
-			image.Save()
+			h.AssertNil(t, image.Save())
 
-			mfest, configFile := h.ReadManifestAndConfigFile(t, imagePath)
+			manifestFile, configFile := h.ReadManifestAndConfigFile(t, imagePath)
 			h.AssertEq(t, configFile.OS, os)
 			h.AssertEq(t, configFile.Architecture, arch)
 			h.AssertEq(t, configFile.Variant, variant)
 			h.AssertEq(t, configFile.OSVersion, osVersion)
 			h.AssertEq(t, configFile.OSFeatures, osFeatures)
-
-			h.AssertEq(t, mfest.Subject.Platform.OS, os)
-			h.AssertEq(t, mfest.Subject.Platform.Architecture, arch)
-			h.AssertEq(t, mfest.Subject.Platform.Variant, variant)
-			h.AssertEq(t, mfest.Subject.Platform.OSVersion, osVersion)
-			h.AssertEq(t, mfest.Subject.Platform.Features, features)
-			h.AssertEq(t, mfest.Subject.Platform.OSFeatures, osFeatures)
-			h.AssertEq(t, mfest.Subject.URLs, urls)
-			h.AssertEq(t, mfest.Subject.Annotations, annos)
-
-			h.AssertEq(t, mfest.Annotations, annos)
+			h.AssertEq(t, manifestFile.Annotations, annos)
 		})
 
 		it("Default Platform values are saved on disk in OCI layout format", func() {
@@ -1289,46 +1275,6 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 		})
 	})
 
-	when("Setters", func() {
-		var digest name.Digest
-		when("index exists on disk", func() {
-			when("#FromBaseImageIndex", func() {
-				it.Before(func() {
-					idx = setUpImageIndex(t, "busybox-multi-platform", tmpDir, imgutil.FromBaseImageIndex(baseIndexPath), imgutil.WithKeychain(authn.DefaultKeychain))
-					localPath = filepath.Join(tmpDir, "busybox-multi-platform")
-					digest, err = name.NewDigest("busybox@sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
-					h.AssertNil(t, err)
-				})
-
-				it("Update platform values for an existent manifest", func() {
-					err = idx.SetOS(digest, "linux-1")
-					h.AssertNil(t, err)
-
-					err = idx.SetArchitecture(digest, "amd64-1")
-					h.AssertNil(t, err)
-
-					err = idx.SetVariant(digest, "v2")
-					h.AssertNil(t, err)
-
-					// After saving, the index on disk must reflect the change
-					err = idx.Save()
-					h.AssertNil(t, err)
-
-					index := h.ReadIndexManifest(t, localPath)
-					h.AssertEq(t, len(index.Manifests), 2)
-					// When updating the manifest is deleted and added at the end
-					h.AssertEq(t, index.Manifests[0].Digest.String(), "sha256:8a4415fb43600953cbdac6ec03c2d96d900bb21f8d78964837dad7f73b9afcdc")
-					h.AssertEq(t, index.Manifests[1].Digest.String(), "sha256:4be429a5fbb2e71ae7958bfa558bc637cf3a61baf40a708cb8fff532b39e52d0")
-
-					modifiedManifest := index.Manifests[1]
-					h.AssertEq(t, modifiedManifest.Platform.OS, "linux-1")
-					h.AssertEq(t, modifiedManifest.Platform.Architecture, "amd64-1")
-					h.AssertEq(t, modifiedManifest.Platform.Variant, "v2")
-				})
-			})
-		})
-	})
-
 	when("#Save", func() {
 		when("index exists on disk", func() {
 			when("#FromBaseImageIndex", func() {
@@ -1398,7 +1344,7 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 			})
 
 			when("manifest in OCI layout format is added", func() {
-				var editableImage imgutil.EditableImage
+				var editableImage imgutil.Image
 				it.Before(func() {
 					editableImage, err = layout.NewImage(imagePath, layout.FromBaseImagePath(fullBaseImagePath))
 					h.AssertNil(t, err)
@@ -1423,7 +1369,7 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 				})
 
 				when("manifest in OCI layout format is added", func() {
-					var editableImage imgutil.EditableImage
+					var editableImage imgutil.Image
 					it.Before(func() {
 						editableImage, err = layout.NewImage(imagePath, layout.FromBaseImagePath(fullBaseImagePath))
 						h.AssertNil(t, err)
@@ -1556,7 +1502,7 @@ func testImageIndex(t *testing.T, when spec.G, it spec.S) {
 	})
 }
 
-func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...layout.Option) imgutil.ImageIndex {
+func setUpImageIndex(t *testing.T, repoName string, tmpDir string, ops ...imgutil.IndexOption) imgutil.ImageIndex {
 	idx, err := layout.NewIndex(repoName, tmpDir, ops...)
 	h.AssertNil(t, err)
 

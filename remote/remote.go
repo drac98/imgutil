@@ -3,7 +3,6 @@ package remote
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -25,8 +24,6 @@ type Image struct {
 	keychain            authn.Keychain
 	addEmptyLayerOnSave bool
 	registrySettings    map[string]imgutil.RegistrySetting
-
-	mutex sync.Mutex
 }
 
 func (i *Image) Kind() string {
@@ -77,10 +74,6 @@ func (i *Image) Identifier() (imgutil.Identifier, error) {
 }
 
 // Valid returns true if the (saved) image is valid.
-// It differs from CNBImageCore.Valid() in that the latter validates the current working image (not what is already saved).
-// Additionally, when the repoName for the image is a manifest list, this method validates the entire index.
-// Finally, this method uses validate.Fast, whereas CNBImageCore.Valid() does not.
-// FIXME: see if this can be combined with CNBImageCore.Valid()
 func (i *Image) Valid() bool {
 	return i.valid() == nil
 }

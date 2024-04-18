@@ -22,8 +22,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	cnbErrs "github.com/buildpacks/imgutil/errors"
-
-	"github.com/buildpacks/imgutil"
 )
 
 // Store provides methods for interacting with a docker daemon
@@ -218,23 +216,9 @@ func (s *Store) addImageToTar(tw *tar.Writer, image v1.Image, withName string) e
 		blankIdx   int
 	)
 	for _, layer := range layers {
-		var layerName string
-		size, err := layer.Size()
+		layerName, err := s.addLayerToTar(tw, layer, &blankIdx)
 		if err != nil {
 			return err
-		}
-		if size == -1 { // layer facade fronting empty layer
-			layerName = fmt.Sprintf("blank_%d", blankIdx)
-			blankIdx++
-			hdr := &tar.Header{Name: layerName, Mode: 0644, Size: 0}
-			if err := tw.WriteHeader(hdr); err != nil {
-				return err
-			}
-		} else {
-			layerName, err = s.addLayerToTar(tw, layer)
-			if err != nil {
-				return err
-			}
 		}
 		layerPaths = append(layerPaths, layerName)
 	}
@@ -252,32 +236,46 @@ func (s *Store) addImageToTar(tw *tar.Writer, image v1.Image, withName string) e
 	return addTextToTar(tw, manifestJSON, "manifest.json")
 }
 
-func (s *Store) addLayerToTar(tw *tar.Writer, layer v1.Layer) (string, error) {
-	layerDiffID, err := layer.DiffID()
-	if err != nil {
-		return "", err
-	}
-	withName := fmt.Sprintf("/%s.tar", layerDiffID.String())
-
-	uncompressedSize, err := s.getLayerSize(layer)
-	if err != nil {
-		return "", err
-	}
-	hdr := &tar.Header{Name: withName, Mode: 0644, Size: uncompressedSize}
-	if err = tw.WriteHeader(hdr); err != nil {
-		return "", err
-	}
-
+func (s *Store) addLayerToTar(tw *tar.Writer, layer v1.Layer, blankIdx *int) (string, error) {
+	// If the layer is a previous image layer that hasn't been downloaded yet,
+	// cause ALL the previous image layers to be downloaded by grabbing the ReadCloser.
 	layerReader, err := layer.Uncompressed()
 	if err != nil {
 		return "", err
 	}
 	defer layerReader.Close()
+
+	var layerName string
+	size, err := layer.Size()
+	if err != nil {
+		return "", err
+	}
+	if size == -1 { // it's a base (always empty) layer
+		layerName = fmt.Sprintf("blank_%d", blankIdx)
+		*blankIdx++
+		hdr := &tar.Header{Name: layerName, Mode: 0644, Size: 0}
+		return layerName, tw.WriteHeader(hdr)
+	}
+	// it's a populated layer
+	layerDiffID, err := layer.DiffID()
+	if err != nil {
+		return "", err
+	}
+	layerName = fmt.Sprintf("/%s.tar", layerDiffID.String())
+
+	uncompressedSize, err := s.getLayerSize(layer)
+	if err != nil {
+		return "", err
+	}
+	hdr := &tar.Header{Name: layerName, Mode: 0644, Size: uncompressedSize}
+	if err = tw.WriteHeader(hdr); err != nil {
+		return "", err
+	}
 	if _, err = io.Copy(tw, layerReader); err != nil {
 		return "", err
 	}
 
-	return withName, nil
+	return layerName, nil
 }
 
 // getLayerSize returns the uncompressed layer size.
@@ -362,26 +360,6 @@ func (s *Store) SaveFile(image *Image, withName string) (string, error) {
 		return "", err
 	}
 
-	image.Image, err = imgutil.MutateManifest(image.Image, func(mfest *v1.Manifest) {
-		image.mutex.TryLock()
-		defer image.mutex.Unlock()
-		var (
-			os, _          = image.OS()
-			arch, _        = image.Architecture()
-			variant, _     = image.Variant()
-			osVersion, _   = image.OSVersion()
-			features, _    = image.Features()
-			osFeatures, _  = image.OSFeatures()
-			urls, _        = image.URLs()
-			annotations, _ = image.Annotations()
-		)
-
-		imgutil.MutateManifestFn(mfest, os, arch, variant, osVersion, features, osFeatures, urls, annotations)
-	})
-	if err != nil {
-		return "", err
-	}
-
 	errs, _ := errgroup.WithContext(context.Background())
 	pr, pw := io.Pipe()
 
@@ -427,7 +405,7 @@ func (s *Store) doDownloadLayersFor(identifier string) error {
 
 	imageReader, err := s.dockerClient.ImageSave(ctx, []string{identifier})
 	if err != nil {
-		return fmt.Errorf("saving base image with ID %q from the docker daemon: %w", identifier, err)
+		return fmt.Errorf("saving image with ID %q from the docker daemon: %w", identifier, err)
 	}
 	defer ensureReaderClosed(imageReader)
 

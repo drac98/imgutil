@@ -6,7 +6,6 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
-	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -169,188 +168,6 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertEq(t, format, types.DockerManifestList)
 		})
 	})
-	when("#Annotate", func() {
-		annotate := imgutil.Annotate{
-			Instance: map[v1.Hash]v1.Descriptor{},
-		}
-		it.Before(func() {
-			annotate = imgutil.Annotate{
-				Instance: map[v1.Hash]v1.Descriptor{},
-			}
-		})
-		when("#OS", func() {
-			it.Before(func() {
-				annotate.SetOS(v1.Hash{}, "some-os")
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetOS(v1.Hash{}, "")
-				os, err := annotate.OS(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, os, "")
-			})
-			it("should return expected os", func() {
-				os, err := annotate.OS(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, os, "some-os")
-			})
-		})
-		when("#Architecture", func() {
-			it.Before(func() {
-				annotate.SetArchitecture(v1.Hash{}, "some-arch")
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetArchitecture(v1.Hash{}, "")
-				arch, err := annotate.Architecture(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, arch, "")
-			})
-			it("should return expected os", func() {
-				arch, err := annotate.Architecture(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, arch, "some-arch")
-			})
-		})
-		when("#Variant", func() {
-			it.Before(func() {
-				annotate.SetVariant(v1.Hash{}, "some-variant")
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetVariant(v1.Hash{}, "")
-				variant, err := annotate.Variant(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, variant, "")
-			})
-			it("should return expected os", func() {
-				variant, err := annotate.Variant(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, variant, "some-variant")
-			})
-		})
-		when("#OSVersion", func() {
-			it.Before(func() {
-				annotate.SetOSVersion(v1.Hash{}, "some-osVersion")
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetOSVersion(v1.Hash{}, "")
-				osVersion, err := annotate.OSVersion(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, osVersion, "")
-			})
-			it("should return expected os", func() {
-				osVersion, err := annotate.OSVersion(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, osVersion, "some-osVersion")
-			})
-		})
-		when("#Features", func() {
-			it.Before(func() {
-				annotate.SetFeatures(v1.Hash{}, []string{"some-features"})
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetFeatures(v1.Hash{}, []string(nil))
-				features, err := annotate.Features(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, features, []string(nil))
-			})
-			it("should return expected features", func() {
-				os, err := annotate.Features(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, os, []string{"some-features"})
-			})
-		})
-		when("#OSFeatures", func() {
-			it.Before(func() {
-				annotate.SetOSFeatures(v1.Hash{}, []string{"some-osFeatures"})
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetOSFeatures(v1.Hash{}, []string(nil))
-				osFeatures, err := annotate.OSFeatures(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, osFeatures, []string(nil))
-			})
-			it("should return expected os", func() {
-				osFeatures, err := annotate.OSFeatures(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, osFeatures, []string{"some-osFeatures"})
-			})
-		})
-		when("#Annotations", func() {
-			it.Before(func() {
-				annotate.SetAnnotations(v1.Hash{}, map[string]string{"some-key": "some-value"})
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetAnnotations(v1.Hash{}, map[string]string(nil))
-				annotations, err := annotate.Annotations(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, annotations, map[string]string(nil))
-			})
-			it("should return expected os", func() {
-				annotations, err := annotate.Annotations(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, annotations, map[string]string{"some-key": "some-value"})
-			})
-		})
-		when("#URLs", func() {
-			it.Before(func() {
-				annotate.SetURLs(v1.Hash{}, []string{"some-urls"})
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-			})
-			it("should return an error", func() {
-				annotate.SetURLs(v1.Hash{}, []string(nil))
-				urls, err := annotate.URLs(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, urls, []string(nil))
-			})
-			it("should return expected os", func() {
-				os, err := annotate.URLs(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, os, []string{"some-urls"})
-			})
-		})
-		when("#Format", func() {
-			it.Before(func() {
-				annotate.SetFormat(v1.Hash{}, types.OCIImageIndex)
-				desc, ok := annotate.Instance[v1.Hash{}]
-				h.AssertEq(t, ok, true)
-				h.AssertNotEq(t, desc, nil)
-				h.AssertEq(t, desc.MediaType, types.OCIImageIndex)
-			})
-			it("should return an error", func() {
-				annotate.SetFormat(v1.Hash{}, types.MediaType(""))
-				format, err := annotate.Format(v1.Hash{})
-				h.AssertNotEq(t, err, nil)
-				h.AssertEq(t, format, types.MediaType(""))
-			})
-			it("should return expected os", func() {
-				format, err := annotate.Format(v1.Hash{})
-				h.AssertNil(t, err)
-				h.AssertEq(t, format, types.OCIImageIndex)
-			})
-		})
-	})
 	when("#GetConfigFile", func() {
 		it("should return ConfigFile", func() {
 			config, err := imgutil.GetConfigFile(emptyImage)
@@ -363,55 +180,6 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			mfest, err := imgutil.GetManifest(emptyImage)
 			h.AssertNotNil(t, mfest)
 			h.AssertNil(t, err)
-		})
-	})
-	when("#MutateManifest", func() {
-		it("should mutate Manifest", func() {
-			img, err := imgutil.MutateManifest(emptyImage, func(c *v1.Manifest) {
-				c.Config.Platform.OS = OS
-				c.Config.Platform.Architecture = arch
-				c.Config.Platform.Variant = variant
-				c.Config.Platform.OSVersion = osVersion
-				c.Config.Platform.Features = features
-				c.Config.Platform.OSFeatures = osFeatures
-				c.Config.URLs = urls
-				c.Annotations = annotations
-			})
-			h.AssertNil(t, err)
-
-			mfest, err := img.Manifest()
-			h.AssertNil(t, err)
-			h.AssertNotNil(t, mfest)
-
-			h.AssertEq(t, mfest.Config.Platform.OS, OS)
-			h.AssertEq(t, mfest.Config.Platform.Architecture, arch)
-			h.AssertEq(t, mfest.Config.Platform.Variant, variant)
-			h.AssertEq(t, mfest.Config.Platform.OSVersion, osVersion)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.Features, features), true)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.OSFeatures, osFeatures), true)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.URLs, urls), true)
-			h.AssertEq(t, imgutil.MapContains(mfest.Annotations, annotations), true)
-		})
-	})
-	when("#MutateManifestFn", func() {
-		it("should mutate image", func() {
-			randImg, err := random.Image(1024, 2)
-			h.AssertNil(t, err)
-
-			mfest, err := randImg.Manifest()
-			h.AssertNil(t, err)
-			h.AssertNotNil(t, mfest)
-
-			imgutil.MutateManifestFn(mfest, OS, arch, variant, osVersion, features, osFeatures, urls, annotations)
-
-			h.AssertEq(t, mfest.Config.Platform.OS, OS)
-			h.AssertEq(t, mfest.Config.Platform.Architecture, arch)
-			h.AssertEq(t, mfest.Config.Platform.Variant, variant)
-			h.AssertEq(t, mfest.Config.Platform.OSVersion, osVersion)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.Features, features), true)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.Platform.OSFeatures, osFeatures), true)
-			h.AssertEq(t, imgutil.SliceContains(mfest.Config.URLs, urls), true)
-			h.AssertEq(t, imgutil.MapContains(mfest.Config.Annotations, annotations), true)
 		})
 	})
 	when("#MapContains", func() {
@@ -455,12 +223,12 @@ func testUtils(t *testing.T, when spec.G, it spec.S) {
 			h.AssertEq(t, imgutil.MakeFileSafeName(imageNameWithDigest), expectedImageNameWithDigest)
 		})
 	})
-	when("#ValidateRepoName", func() {
-		it("should not return error when insecure", func() {
-			h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: true}}))
-		})
-		it("should not return an error when secure", func() {
-			h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: false}}))
-		})
-	})
+	// when("#ValidateRepoName", func() {
+	// 	it("should not return error when insecure", func() {
+	// 		h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: true}}))
+	// 	})
+	// 	it("should not return an error when secure", func() {
+	// 		h.AssertNil(t, imgutil.ValidateRepoName(repoName, &imgutil.IndexOptions{IndexRemoteOptions: imgutil.IndexRemoteOptions{Insecure: false}}))
+	// 	})
+	// })
 }

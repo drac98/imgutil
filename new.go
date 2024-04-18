@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -291,23 +292,16 @@ func prepareNewWindowsImageIfNeeded(image *CNBImageCore) error {
 
 func NewCNBIndex(repoName string, v1Index v1.ImageIndex, ops IndexOptions) (*CNBIndex, error) {
 	index := &CNBIndex{
-		ImageIndex:       v1Index,
-		Insecure:         ops.Insecure,
-		RepoName:         repoName,
-		XdgPath:          ops.XdgPath,
-		KeyChain:         ops.KeyChain,
-		Format:           ops.Format,
-		annotate:         NewAnnotate(),
-		removedManifests: make([]v1.Hash, 0),
-		images:           make(map[v1.Hash]v1.Descriptor),
+		ImageIndex:         v1Index,
+		RegistrySetting:    RegistrySetting{Insecure: ops.Insecure},
+		RepoName:           repoName,
+		XdgPath:            ops.XdgPath,
+		KeyChain:           ops.KeyChain,
+		IndexFormatOptions: IndexFormatOptions{Format: ops.Format},
+		removedManifests:   make([]v1.Hash, 0),
+		images:             ImageHolder{mutex: sync.Mutex{}, images: make(map[v1.Hash]v1.Descriptor)},
 	}
 	return index, nil
-}
-
-func NewAnnotate() Annotate {
-	return Annotate{
-		Instance: make(map[v1.Hash]v1.Descriptor),
-	}
 }
 
 func NewTaggableIndex(mfest *v1.IndexManifest) *TaggableIndex {

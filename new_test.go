@@ -18,12 +18,6 @@ func TestNew(t *testing.T) {
 }
 
 func testNew(t *testing.T, when spec.G, it spec.S) {
-	when("#NewAnnotate", func() {
-		it("Annotate should not panic", func() {
-			annotate := imgutil.NewAnnotate()
-			h.AssertNotNil(t, annotate.Instance)
-		})
-	})
 	when("#NewCNBIndex", func() {
 		it("should return New Instance", func() {
 			opts := imgutil.IndexOptions{

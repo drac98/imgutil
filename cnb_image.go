@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
-	"github.com/google/go-containerregistry/pkg/v1/validate"
 
 	cnbErrs "github.com/buildpacks/imgutil/errors"
 )
@@ -29,8 +28,6 @@ type CNBImageCore struct {
 	preferredMediaTypes MediaTypes
 	preserveHistory     bool
 	previousImage       v1.Image
-	features, urls      []string
-	annotations         map[string]string
 }
 
 var _ v1.Image = &CNBImageCore{}
@@ -176,51 +173,37 @@ func (i *CNBImageCore) OSFeatures() ([]string, error) {
 	return configFile.OSFeatures, nil
 }
 
-func (i *CNBImageCore) Features() ([]string, error) {
-	if len(i.features) != 0 {
-		return i.features, nil
-	}
-
-	mfest, err := GetManifest(i.Image)
+func (i *CNBImageCore) Features() (features []string, err error) {
+	desc, err := partial.Descriptor(i)
 	if err != nil {
-		return nil, err
+		return features, err
 	}
 
-	p := mfest.Config.Platform
-	if p == nil || len(p.Features) == 0 {
+	if desc == nil || desc.Platform == nil || len(desc.Platform.Features) == 0 {
 		return nil, fmt.Errorf("image features is undefined for %s ImageIndex", i.preferredMediaTypes.ManifestType())
 	}
-	return p.Features, nil
+	return desc.Platform.Features, nil
 }
 
-func (i *CNBImageCore) URLs() ([]string, error) {
-	if len(i.urls) != 0 {
-		return i.urls, nil
-	}
-
-	mfest, err := GetManifest(i.Image)
+func (i *CNBImageCore) URLs() (urls []string, err error) {
+	desc, err := partial.Descriptor(i)
 	if err != nil {
-		return nil, err
+		return urls, err
 	}
 
-	if len(mfest.Config.URLs) == 0 {
+	if desc == nil || len(desc.URLs) == 0 {
 		return nil, fmt.Errorf("image urls is undefined for %s ImageIndex", i.preferredMediaTypes.ManifestType())
 	}
-	return mfest.Config.URLs, nil
+	return desc.URLs, nil
 }
 
 func (i *CNBImageCore) Annotations() (map[string]string, error) {
-	if len(i.annotations) != 0 {
-		return i.annotations, nil
-	}
-
 	mfest, err := GetManifest(i.Image)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(mfest.Annotations) == 0 {
-		return nil, fmt.Errorf("image annotations is undefined for %s ImageIndex", i.preferredMediaTypes.ManifestType())
+	if mfest.Annotations == nil {
+		return make(map[string]string), nil
 	}
 	return mfest.Annotations, nil
 }
@@ -246,11 +229,6 @@ func (i *CNBImageCore) UnderlyingImage() v1.Image {
 	return i.Image
 }
 
-func (i *CNBImageCore) Valid() bool {
-	err := validate.Image(i.Image)
-	return err == nil
-}
-
 // TBD Deprecated: Variant
 func (i *CNBImageCore) Variant() (string, error) {
 	configFile, err := GetConfigFile(i.Image)
@@ -270,6 +248,12 @@ func (i *CNBImageCore) WorkingDir() (string, error) {
 }
 
 func (i *CNBImageCore) AnnotateRefName(refName string) error {
+	return i.SetAnnotations(map[string]string{
+		"org.opencontainers.image.ref.name": refName,
+	})
+}
+
+func (i *CNBImageCore) SetAnnotations(annotations map[string]string) error {
 	manifest, err := GetManifest(i.Image)
 	if err != nil {
 		return err
@@ -277,24 +261,15 @@ func (i *CNBImageCore) AnnotateRefName(refName string) error {
 	if manifest.Annotations == nil {
 		manifest.Annotations = make(map[string]string)
 	}
-	manifest.Annotations["org.opencontainers.image.ref.name"] = refName
+	for k, v := range annotations {
+		manifest.Annotations[k] = v
+	}
 	mutated := mutate.Annotations(i.Image, manifest.Annotations)
 	image, ok := mutated.(v1.Image)
 	if !ok {
-		return fmt.Errorf("failed to add annotation")
+		return fmt.Errorf("failed to add annotations")
 	}
 	i.Image = image
-	return nil
-}
-
-func (i *CNBImageCore) SetAnnotations(annotations map[string]string) error {
-	if len(i.annotations) == 0 {
-		i.annotations = make(map[string]string)
-	}
-
-	for k, v := range annotations {
-		i.annotations[k] = v
-	}
 	return nil
 }
 
@@ -342,11 +317,6 @@ func (i *CNBImageCore) SetEnv(key, val string) error {
 	})
 }
 
-func (i *CNBImageCore) SetFeatures(features []string) (err error) {
-	i.features = append(i.features, features...)
-	return nil
-}
-
 // TBD Deprecated: SetHistory
 func (i *CNBImageCore) SetHistory(histories []v1.History) error {
 	return i.MutateConfigFile(func(c *v1.ConfigFile) {
@@ -380,11 +350,6 @@ func (i *CNBImageCore) SetOSVersion(osVersion string) error {
 	return i.MutateConfigFile(func(c *v1.ConfigFile) {
 		c.OSVersion = osVersion
 	})
-}
-
-func (i *CNBImageCore) SetURLs(urls []string) (err error) {
-	i.urls = append(i.urls, urls...)
-	return nil
 }
 
 // TBD Deprecated: SetVariant
